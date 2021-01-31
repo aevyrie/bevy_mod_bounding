@@ -1,8 +1,8 @@
 mod boxes;
 mod sphere;
 
-use boxes::*;
 use bevy::prelude::*;
+use boxes::*;
 use sphere::*;
 
 pub struct BoundingVolumePlugin;
@@ -19,10 +19,9 @@ pub enum BoundingVolume {
     BoundingSphere(Option<BoundingSphere>),
     AxisAlignedBoundingBox(Option<AxisAlignedBoundingBox>),
     OrientedBoundingBox(Option<OrientedBoundingBox>), // Not Implemented
-    DiscreteOrientedPolytope, // Not Implemented
-    ConvexHull, // Not Implemented
+    DiscreteOrientedPolytope,                         // Not Implemented
+    ConvexHull,                                       // Not Implemented
 }
-
 
 /// Iterates through all entities with [BoundingVolume]s, and updates them if the volume was just
 /// added, or the entity's mesh has changed.
@@ -35,15 +34,15 @@ pub fn update_bounding_volumes(
 ) {
     for (mut bound_vol, mesh_handle) in &mut new_or_changed_vols_query.iter_mut() {
         if let Some(mesh) = meshes.get(mesh_handle) {
-            *bound_vol = match bound_vol.clone() {
-                BoundingVolume::BoundingSphere(_) => {
-                    BoundingVolume::BoundingSphere(Some(BoundingSphere::from(mesh)))
+            match *bound_vol {
+                BoundingVolume::BoundingSphere(ref mut vol) => {
+                    *vol = Some(BoundingSphere::from(mesh))
                 }
-                BoundingVolume::AxisAlignedBoundingBox(_) => {
-                    BoundingVolume::AxisAlignedBoundingBox(Some(AxisAlignedBoundingBox::from(mesh)))
+                BoundingVolume::AxisAlignedBoundingBox(ref mut vol) => {
+                    *vol = Some(AxisAlignedBoundingBox::from(mesh))
                 }
-                BoundingVolume::OrientedBoundingBox(_) => {
-                    BoundingVolume::OrientedBoundingBox(Some(OrientedBoundingBox::from(mesh)))
+                BoundingVolume::OrientedBoundingBox(ref mut vol) => {
+                    *vol = Some(OrientedBoundingBox::from(mesh))
                 }
                 _ => continue,
             }
