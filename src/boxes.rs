@@ -53,7 +53,7 @@ fn compute_aabb(vertices: &Vec<Vec3>, transform: Option<Mat4>) -> AxisAlignedBou
                 minimums = maximums.min(transform.transform_point3(*vertex));
             }
         }
-        None => { 
+        None => {
             for vertex in vertices.iter() {
                 maximums = vertex.max(maximums);
                 minimums = vertex.min(minimums);
@@ -101,39 +101,31 @@ impl From<&Mesh> for OrientedBoundingBox {
                 _ => panic!("Unexpected vertex types in ATTRIBUTE_POSITION"),
             },
         };
+
         let mut orientation = Mat4::default();
         let mut volume = f32::MAX;
-        for x_angle in (0..180).step_by(10) {
-            let new_orientation = Mat4::from_rotation_x(x_angle as f32*2.0*PI/360.0);
-            let dims = compute_aabb(&vertices, Some(new_orientation)).dimensions;
-            let new_volume = dims.x * dims.y * dims.z;
-            if new_volume < volume {
-                volume = new_volume;
-                orientation = new_orientation;
+        for step in 0..3 {
+            // Rotate about y-axis  (turntable) until the smallest volume box is found
+            let orientation_temp = orientation;
+            for angle in (0..90).step_by(10) {
+                let new_orientation = orientation_temp
+                    * match step {
+                        0 => Mat4::from_rotation_x(angle as f32 * 2.0 * PI / 360.0),
+                        1 => Mat4::from_rotation_y(angle as f32 * 2.0 * PI / 360.0),
+                        2 => Mat4::from_rotation_z(angle as f32 * 2.0 * PI / 360.0),
+                        _ => panic!("Unreachable match arm reached!"),
+                    };
+                let dims = compute_aabb(&vertices, Some(new_orientation)).dimensions;
+                let new_volume = dims.x * dims.y * dims.z;
+                if new_volume < volume {
+                    volume = new_volume;
+                    orientation = new_orientation;
+                }
             }
         }
-        let orientation_x = orientation;
-        for y_angle in (0..180).step_by(10) {
-            let new_orientation = orientation_x*Mat4::from_rotation_y(y_angle as f32*2.0*PI/360.0) ;
-            let dims = compute_aabb(&vertices, Some(new_orientation)).dimensions;
-            let new_volume = dims.x * dims.y * dims.z;
-            if new_volume < volume {
-                volume = new_volume;
-                orientation = new_orientation;
-            }
-        }
-        let orientation_y = orientation;
-        for z_angle in (0..180).step_by(10) {
-            let new_orientation = orientation_y*Mat4::from_rotation_z(z_angle as f32*2.0*PI/360.0);
-            let dims = compute_aabb(&vertices, Some(new_orientation)).dimensions;
-            let new_volume = dims.x * dims.y * dims.z;
-            if new_volume < volume {
-                volume = new_volume;
-                orientation = new_orientation;
-            }
-        }
+
         let aabb = compute_aabb(&vertices, Some(orientation));
-        OrientedBoundingBox{
+        OrientedBoundingBox {
             origin: aabb.origin,
             dimensions: aabb.dimensions,
             orientation: orientation.inverse(),
