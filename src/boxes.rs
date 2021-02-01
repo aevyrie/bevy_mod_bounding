@@ -21,8 +21,8 @@ impl AxisAlignedBoundingBox {
     }
 }
 
-impl From<&Mesh> for AxisAlignedBoundingBox {
-    fn from(mesh: &Mesh) -> Self {
+impl AxisAlignedBoundingBox {
+    pub fn new(mesh: &Mesh, transform: &GlobalTransform) -> Self {
         // Grab a vector of vertex coordinates we can use to iterate through
         if mesh.primitive_topology() != PrimitiveTopology::TriangleList {
             panic!("Non-TriangleList mesh supplied for bounding box generation")
@@ -37,7 +37,7 @@ impl From<&Mesh> for AxisAlignedBoundingBox {
                 _ => panic!("Unexpected vertex types in ATTRIBUTE_POSITION"),
             },
         };
-        compute_aabb(&vertices, None)
+        compute_aabb(&vertices, Some(transform.compute_matrix()))
     }
 }
 
@@ -70,7 +70,7 @@ fn compute_aabb(vertices: &Vec<Vec3>, transform: Option<Mat4>) -> AxisAlignedBou
 pub struct OrientedBoundingBox {
     origin: Vec3,
     dimensions: Vec3,
-    orientation: Mat4,
+    orientation: Quat,
 }
 
 impl OrientedBoundingBox {
@@ -80,7 +80,7 @@ impl OrientedBoundingBox {
     pub fn dimensions(&self) -> Vec3 {
         self.dimensions
     }
-    pub fn orientation(&self) -> Mat4 {
+    pub fn orientation(&self) -> Quat {
         self.orientation
     }
 }
@@ -128,7 +128,7 @@ impl From<&Mesh> for OrientedBoundingBox {
         OrientedBoundingBox {
             origin: aabb.origin,
             dimensions: aabb.dimensions,
-            orientation: orientation.inverse(),
+            orientation: Quat::from_rotation_mat4(&orientation.inverse()),
         }
     }
 }
