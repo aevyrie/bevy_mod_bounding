@@ -4,11 +4,29 @@ use bevy::{
 };
 use core::panic;
 
+use crate::{BoundingVolume, IsBoundingVolume};
+
 /// Defines a bounding sphere with a center point coordinate and a radius
 #[derive(Debug, Clone)]
 pub struct BoundingSphere {
     origin: Vec3,
     radius: f32,
+}
+
+/// Updates the definition of
+pub fn bounding_sphere_update_system(
+    meshes: Res<Assets<Mesh>>,
+    mut sphere_query: Query<
+        (&mut BoundingSphere, &GlobalTransform, &Handle<Mesh>),
+        Or<(Changed<GlobalTransform>, Changed<Handle<Mesh>>)>,
+    >,
+) {
+    for (mut bounding_sphere, transform, handle) in sphere_query.iter_mut() {
+        let mesh = meshes
+            .get(handle)
+            .expect("Bounding volume had bad mesh handle");
+        *bounding_sphere = BoundingSphere::new(mesh, transform);
+    }
 }
 
 impl BoundingSphere {
@@ -20,8 +38,8 @@ impl BoundingSphere {
     }
 }
 
-impl From<&Mesh> for BoundingSphere {
-    fn from(mesh: &Mesh) -> Self {
+impl IsBoundingVolume for BoundingSphere {
+    fn new(mesh: &Mesh, transform: &GlobalTransform) -> Self {
         // Grab a vector of vertex coordinates we can use to iterate through
         if mesh.primitive_topology() != PrimitiveTopology::TriangleList {
             panic!("Non-TriangleList mesh supplied for bounding sphere generation")
@@ -31,7 +49,7 @@ impl From<&Mesh> for BoundingSphere {
             Some(vertex_values) => match &vertex_values {
                 VertexAttributeValues::Float3(positions) => positions
                     .iter()
-                    .map(|coordinates| Vec3::from(*coordinates))
+                    .map(|coordinates| transform.mul_vec3(Vec3::from(*coordinates)))
                     .collect(),
                 _ => panic!("Unexpected vertex types in ATTRIBUTE_POSITION"),
             },

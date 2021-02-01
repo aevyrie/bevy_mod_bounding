@@ -40,30 +40,19 @@ fn setup(
             transform: Transform::from_translation(Vec3::new(-6.0, 0.0, 0.0)),
             ..Default::default()
         })
-        .with_bundle(BoundingVolumeBundle::new(BoundingVolume::BoundingSphere(
-            None,
-        )))
-        .with(BoundingVolumeDebug)
+        .with(BoundingVolume::<BoundingSphere>::default())
         .spawn(PbrBundle {
             mesh: mesh_handle2,
             material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
             transform: Transform::from_translation(Vec3::new(-3.0, 0.0, 0.0)),
             ..Default::default()
         })
-        .with_bundle(BoundingVolumeBundle::new(
-            BoundingVolume::AxisAlignedBoundingBox(None),
-        ))
-        .with(BoundingVolumeDebug)
         .spawn(PbrBundle {
             mesh: mesh_handle3,
             material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
             transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
             ..Default::default()
         })
-        .with_bundle(BoundingVolumeBundle::new(
-            BoundingVolume::OrientedBoundingBox(None),
-        ))
-        .with(BoundingVolumeDebug)
         /*
         .spawn(PbrBundle {
             mesh: mesh_handle4,
