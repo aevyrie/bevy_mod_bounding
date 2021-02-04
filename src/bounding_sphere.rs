@@ -1,34 +1,16 @@
+use crate::IsBoundingVolume;
 use bevy::{
     prelude::*,
     render::{mesh::VertexAttributeValues, pipeline::PrimitiveTopology},
 };
 use core::panic;
 
-use crate::{BoundingVolume, IsBoundingVolume};
-
-/// Defines a bounding sphere with a center point coordinate and a radius
+/// Defines a bounding sphere with a centered origin and a radius..
 #[derive(Debug, Clone)]
 pub struct BoundingSphere {
     origin: Vec3,
     radius: f32,
 }
-
-/// Updates the definition of
-pub fn bounding_sphere_update_system(
-    meshes: Res<Assets<Mesh>>,
-    mut sphere_query: Query<
-        (&mut BoundingSphere, &GlobalTransform, &Handle<Mesh>),
-        Or<(Changed<GlobalTransform>, Changed<Handle<Mesh>>)>,
-    >,
-) {
-    for (mut bounding_sphere, transform, handle) in sphere_query.iter_mut() {
-        let mesh = meshes
-            .get(handle)
-            .expect("Bounding volume had bad mesh handle");
-        *bounding_sphere = BoundingSphere::new(mesh, transform);
-    }
-}
-
 impl BoundingSphere {
     pub fn origin(&self) -> Vec3 {
         self.origin
@@ -36,8 +18,26 @@ impl BoundingSphere {
     pub fn radius(&self) -> f32 {
         self.radius
     }
+    /// Updates the bounding volume definition for all [BoundingSphere]s if their associated
+    /// [GlobalTransform] or [Mesh] handle are changed.
+    pub fn update(
+        meshes: Res<Assets<Mesh>>,
+        mut sphere_query: Query<
+            (&mut BoundingSphere, &GlobalTransform, &Handle<Mesh>),
+            Or<(Changed<GlobalTransform>, Changed<Handle<Mesh>>)>,
+        >,
+    ) {
+        for (mut bounding_sphere, transform, handle) in sphere_query.iter_mut() {
+            let mesh = meshes
+                .get(handle)
+                .expect("Bounding volume had bad mesh handle");
+            *bounding_sphere = BoundingSphere::new(mesh, transform);
+        }
+    }
 }
 
+
+/// Create a valid boundary sphere from a mesh and globaltransform.
 impl IsBoundingVolume for BoundingSphere {
     fn new(mesh: &Mesh, transform: &GlobalTransform) -> Self {
         // Grab a vector of vertex coordinates we can use to iterate through
@@ -49,7 +49,11 @@ impl IsBoundingVolume for BoundingSphere {
             Some(vertex_values) => match &vertex_values {
                 VertexAttributeValues::Float3(positions) => positions
                     .iter()
-                    .map(|coordinates| transform.mul_vec3(Vec3::from(*coordinates)))
+                    .map(|coordinates| {
+                        // We want to keep the mesh close to the origin to prevent adding float
+                        // error, but need the scale to produce a valid bounding sphere.
+                        Vec3::from(*coordinates) * transform.scale
+                    })
                     .collect(),
                 _ => panic!("Unexpected vertex types in ATTRIBUTE_POSITION"),
             },
@@ -99,5 +103,31 @@ impl IsBoundingVolume for BoundingSphere {
                 return sphere;
             }
         }
+    }
+
+    fn new_debug_mesh(&self, transform: &GlobalTransform) -> Mesh {
+        let mut mesh = Mesh::from(shape::Icosphere {
+            radius: self.radius,
+            ..Default::default()
+        });
+        let inverse_transform = Transform::from_matrix(
+            Mat4::from_scale(transform.scale).inverse(),
+        );
+        match mesh.attribute_mut(Mesh::ATTRIBUTE_POSITION) {
+            None => panic!("Mesh does not contain vertex positions"),
+            Some(vertex_values) => match vertex_values {
+                VertexAttributeValues::Float3(ref mut positions) => {
+                    *positions = positions
+                        .iter()
+                        .map(|coordinates| {
+                            inverse_transform.mul_vec3(Vec3::from(*coordinates)).into()
+                        })
+                        .collect()
+                }
+                _ => panic!("Unexpected vertex types in ATTRIBUTE_POSITION"),
+            },
+        };
+        println!("new debug mesh");
+        mesh
     }
 }

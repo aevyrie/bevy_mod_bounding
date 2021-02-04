@@ -7,7 +7,7 @@ use bevy::prelude::*;
 ///
 /// The entity must also have a [BoundingVolume] component.
 #[derive(Default)]
-pub struct BoundingVolumeDebug;
+
 
 /// Used to mark the actual debug mesh, and records the entity of the associated mesh
 pub struct BoundingMesh {
