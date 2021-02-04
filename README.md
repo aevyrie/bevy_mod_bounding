@@ -6,7 +6,7 @@ Unofficial plugin for generating bounding boxes.
 
 | Status | Bounding Volume |
 |:-:|----------------------------|
-| WIP 🚧 | Bounding Sphere            |
-| WIP 🚧 | Axis Aligned Bounding Box  |
-| WIP 🚧 | Oriented Bounding Box      |
-| Not Started ❌ | Convex Hull                |
+| ✅ | Bounding Sphere            |
+| ✅ | Axis Aligned Bounding Box  |
+| ✅ | Oriented Bounding Box      |
+| ❌ | Convex Hull                |
