@@ -2,6 +2,8 @@
 
 Unofficial plugin for generating bounding boxes.
 
+![demo](docs/demo.webp)
+
 | Status | Bounding Volume |
 |:-:|----------------------------|
 | WIP 🚧 | Bounding Sphere            |
