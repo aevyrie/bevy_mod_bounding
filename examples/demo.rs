@@ -46,7 +46,7 @@ fn setup(
             transform: Transform::from_translation(Vec3::new(-2.0, 0.0, 0.0)),
             ..Default::default()
         })
-        .with(BoundingVolume::<BoundingSphere>::default())
+        .with(BoundingVolume::<AxisAlignedBoundingBox>::default())
         .with(BoundingVolumeDebug)
         .spawn(PbrBundle {
             mesh: mesh_handle3,
@@ -54,7 +54,7 @@ fn setup(
             transform: Transform::from_translation(Vec3::new(2.0, 0.0, 0.0)),
             ..Default::default()
         })
-        .with(BoundingVolume::<BoundingSphere>::default())
+        .with(BoundingVolume::<OrientedBoundingBox>::default())
         .with(BoundingVolumeDebug)
         .spawn(PbrBundle {
             mesh: mesh_handle4,
@@ -62,8 +62,8 @@ fn setup(
             transform: Transform::from_translation(Vec3::new(6.0, 0.0, 0.0)),
             ..Default::default()
         })
-        .with(BoundingVolume::<BoundingSphere>::default())
-        .with(BoundingVolumeDebug)
+        //.with(BoundingVolume::<BoundingSphere>::default())
+        //.with(BoundingVolumeDebug)
         .spawn(LightBundle {
             transform: Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),
             ..Default::default()

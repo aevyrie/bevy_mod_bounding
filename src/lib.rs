@@ -1,12 +1,13 @@
-//mod boxes;
-mod bounding_sphere;
+mod axis_aligned_box;
 mod debug;
+mod oriented_box;
+mod sphere;
 use bevy::prelude::*;
 use std::marker::PhantomData;
-//use boxes::*;
-use debug::*;
 
-pub use bounding_sphere::BoundingSphere;
+pub use axis_aligned_box::AxisAlignedBoundingBox;
+pub use oriented_box::OrientedBoundingBox;
+pub use sphere::BoundingSphere;
 
 //pub use debug::BoundingVolumeDebug;
 
@@ -17,8 +18,27 @@ impl Plugin for BoundingVolumePlugin {
             stage::PRE_UPDATE,
             spawn_bounding_volumes::<BoundingSphere>.system(),
         )
+        .add_system_to_stage(
+            stage::PRE_UPDATE,
+            spawn_bounding_volumes::<AxisAlignedBoundingBox>.system(),
+        )
+        .add_system_to_stage(
+            stage::PRE_UPDATE,
+            spawn_bounding_volumes::<OrientedBoundingBox>.system(),
+        )
         .add_system_to_stage(stage::POST_UPDATE, BoundingSphere::update.system())
-        .add_system_to_stage(stage::UPDATE, update_debug_meshes::<BoundingSphere>.system());
+        .add_system_to_stage(
+            stage::UPDATE,
+            debug::update_debug_meshes::<BoundingSphere>.system(),
+        )
+        .add_system_to_stage(
+            stage::UPDATE,
+            debug::update_debug_meshes::<AxisAlignedBoundingBox>.system(),
+        )
+        .add_system_to_stage(
+            stage::UPDATE,
+            debug::update_debug_meshes::<OrientedBoundingBox>.system(),
+        );
     }
 }
 
@@ -52,6 +72,7 @@ pub fn spawn_bounding_volumes<T: 'static + IsBoundingVolume + Send + Sync>(
         (
             Or<(Added<BoundingVolume<T>>, With<LoadingMesh>)>,
             Without<T>,
+            With<BoundingVolume<T>>,
         ),
     >,
 ) {

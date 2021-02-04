@@ -113,7 +113,14 @@ impl IsBoundingVolume for BoundingSphere {
             radius: self.radius,
             ..Default::default()
         });
-        let inverse_transform = Transform::from_matrix(Mat4::from_scale(transform.scale).inverse());
+        let inverse_transform = Transform::from_matrix(
+            Mat4::from_scale_rotation_translation(
+                transform.scale,
+                transform.rotation,
+                Vec3::zero(),
+            )
+            .inverse(),
+        );
         match mesh.attribute_mut(Mesh::ATTRIBUTE_POSITION) {
             None => panic!("Mesh does not contain vertex positions"),
             Some(vertex_values) => match vertex_values {
