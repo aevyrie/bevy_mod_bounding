@@ -40,6 +40,21 @@ impl OrientedBoundingBox {
             orientation,
         }
     }
+
+    pub fn update(
+        meshes: Res<Assets<Mesh>>,
+        mut query: Query<
+            (&mut OrientedBoundingBox, &GlobalTransform, &Handle<Mesh>),
+            Changed<Handle<Mesh>>,
+        >,
+    ) {
+        for (mut bounding_vol, transform, handle) in query.iter_mut() {
+            let mesh = meshes
+                .get(handle)
+                .expect("Bounding volume had bad mesh handle");
+            *bounding_vol = OrientedBoundingBox::new(mesh, transform);
+        }
+    }
 }
 
 impl IsBoundingVolume for OrientedBoundingBox {
