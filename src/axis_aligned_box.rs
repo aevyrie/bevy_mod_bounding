@@ -2,7 +2,6 @@ use crate::IsBoundingVolume;
 use bevy::{
     prelude::*,
     render::{mesh::VertexAttributeValues, pipeline::PrimitiveTopology},
-    transform,
 };
 use core::panic;
 
@@ -32,6 +31,22 @@ impl AxisAlignedBoundingBox {
         let origin = minimums;
         AxisAlignedBoundingBox { origin, dimensions }
     }
+    /// Updates the bounding volume definition for all [AxisAlignedBoundingBox]s if their associated
+    /// [GlobalTransform] or [Mesh] handle are changed.
+    pub fn update(
+        meshes: Res<Assets<Mesh>>,
+        mut query: Query<
+            (&mut AxisAlignedBoundingBox, &GlobalTransform, &Handle<Mesh>),
+            Or<(Changed<GlobalTransform>, Changed<Handle<Mesh>>)>,
+        >,
+    ) {
+        for (mut bounding_vol, transform, handle) in query.iter_mut() {
+            let mesh = meshes
+                .get(handle)
+                .expect("Bounding volume had bad mesh handle");
+            *bounding_vol = AxisAlignedBoundingBox::new(mesh, transform);
+        }
+    }
 }
 
 impl IsBoundingVolume for AxisAlignedBoundingBox {
@@ -56,7 +71,6 @@ impl IsBoundingVolume for AxisAlignedBoundingBox {
                 _ => panic!("Unexpected vertex types in ATTRIBUTE_POSITION"),
             },
         };
-        println!("AABB created");
         Self::compute_aabb(&vertices)
     }
 
@@ -91,7 +105,6 @@ impl IsBoundingVolume for AxisAlignedBoundingBox {
                 _ => panic!("Unexpected vertex types in ATTRIBUTE_POSITION"),
             },
         };
-        println!("new aabb debug mesh");
         mesh
     }
 }

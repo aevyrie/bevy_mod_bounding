@@ -27,16 +27,17 @@ impl Plugin for BoundingVolumePlugin {
             spawn_bounding_volumes::<OrientedBoundingBox>.system(),
         )
         .add_system_to_stage(stage::POST_UPDATE, BoundingSphere::update.system())
+        .add_system_to_stage(stage::POST_UPDATE, AxisAlignedBoundingBox::update.system())
         .add_system_to_stage(
-            stage::UPDATE,
+            stage::POST_UPDATE,
             debug::update_debug_meshes::<BoundingSphere>.system(),
         )
         .add_system_to_stage(
-            stage::UPDATE,
+            stage::POST_UPDATE,
             debug::update_debug_meshes::<AxisAlignedBoundingBox>.system(),
         )
         .add_system_to_stage(
-            stage::UPDATE,
+            stage::POST_UPDATE,
             debug::update_debug_meshes::<OrientedBoundingBox>.system(),
         );
     }

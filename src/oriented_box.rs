@@ -2,7 +2,6 @@ use crate::IsBoundingVolume;
 use bevy::{
     prelude::*,
     render::{mesh::VertexAttributeValues, pipeline::PrimitiveTopology},
-    transform,
 };
 use core::panic;
 use std::f32::consts::PI;
@@ -30,7 +29,7 @@ impl OrientedBoundingBox {
         let mut minimums = Vec3::new(f32::MAX, f32::MAX, f32::MAX);
         for vertex in vertices.iter() {
             maximums = maximums.max(transform.transform_point3(*vertex));
-            minimums = maximums.min(transform.transform_point3(*vertex));
+            minimums = minimums.min(transform.transform_point3(*vertex));
         }
         let dimensions = maximums;
         let origin = minimums;
@@ -60,12 +59,12 @@ impl IsBoundingVolume for OrientedBoundingBox {
             },
         };
 
-        let mut orientation = Mat4::default();
+        let mut orientation = Mat4::from_quat(Quat::identity());
         let mut volume = f32::MAX;
         for step in 0..3 {
             // Rotate about y-axis  (turntable) until the smallest volume box is found
             let orientation_temp = orientation;
-            for angle in (0..90).step_by(10) {
+            for angle in (0..90).step_by(5) {
                 let new_orientation = orientation_temp
                     * match step {
                         0 => Mat4::from_rotation_x(angle as f32 * 2.0 * PI / 360.0),
@@ -94,7 +93,7 @@ impl IsBoundingVolume for OrientedBoundingBox {
             min_y: self.origin.y,
             min_z: self.origin.z,
         });
-        let transform = Mat4::from_quat(self.orientation);
+        let transform = Mat4::from_quat(self.orientation).inverse();
         match mesh.attribute_mut(Mesh::ATTRIBUTE_POSITION) {
             None => panic!("Mesh does not contain vertex positions"),
             Some(vertex_values) => match vertex_values {
@@ -109,7 +108,6 @@ impl IsBoundingVolume for OrientedBoundingBox {
                 _ => panic!("Unexpected vertex types in ATTRIBUTE_POSITION"),
             },
         };
-        println!("new obb debug mesh");
         mesh
     }
 }

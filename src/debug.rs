@@ -19,7 +19,6 @@ pub fn update_debug_meshes<T: 'static + IsBoundingVolume + Send + Sync>(
         if let Some(children) = optional_children {
             for child in children.iter() {
                 if let Ok(mesh_handle) = debug_mesh_query.get(*child) {
-                    println!("update debug");
                     *meshes
                         .get_mut(mesh_handle)
                         .expect("Bad handle in bounding debug mush") =
@@ -29,7 +28,6 @@ pub fn update_debug_meshes<T: 'static + IsBoundingVolume + Send + Sync>(
             }
         }
         if !updated_existing_child {
-            println!("debug spawn");
             let mesh_handle = meshes.add(bound_vol.new_debug_mesh(transform));
             commands.set_current_entity(entity);
             commands.with_children(|parent| {

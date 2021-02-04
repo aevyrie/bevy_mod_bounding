@@ -135,7 +135,6 @@ impl IsBoundingVolume for BoundingSphere {
                 _ => panic!("Unexpected vertex types in ATTRIBUTE_POSITION"),
             },
         };
-        println!("new debug mesh");
         mesh
     }
 }
