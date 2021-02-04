@@ -22,10 +22,14 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let _scenes: Vec<HandleUntyped> = asset_server.load_folder("models").unwrap();
-    let mesh_handle1 = asset_server.get_handle("models/waterbottle/WaterBottle.gltf#Mesh0/Primitive0");
-    let mesh_handle2 = asset_server.get_handle("models/waterbottle/WaterBottle.gltf#Mesh0/Primitive0");
-    let mesh_handle3 = asset_server.get_handle("models/waterbottle/WaterBottle.gltf#Mesh0/Primitive0");
-    let mesh_handle4 = asset_server.get_handle("models/waterbottle/WaterBottle.gltf#Mesh0/Primitive0");
+    let mesh_handle1 =
+        asset_server.get_handle("models/waterbottle/WaterBottle.gltf#Mesh0/Primitive0");
+    let mesh_handle2 =
+        asset_server.get_handle("models/waterbottle/WaterBottle.gltf#Mesh0/Primitive0");
+    let mesh_handle3 =
+        asset_server.get_handle("models/waterbottle/WaterBottle.gltf#Mesh0/Primitive0");
+    let mesh_handle4 =
+        asset_server.get_handle("models/waterbottle/WaterBottle.gltf#Mesh0/Primitive0");
     commands
         .spawn(PerspectiveCameraBundle {
             transform: Transform::from_matrix(Mat4::face_toward(
@@ -78,10 +82,10 @@ fn setup(
 }
 
 fn rotation_system(time: Res<Time>, mut query: Query<&mut Transform, With<Rotator>>) {
-    for mut transform in query.iter_mut(){
-        let rot_x = Quat::from_rotation_x((time.seconds_since_startup() as f32/5.0).sin()/10.0);
-        let rot_y = Quat::from_rotation_y((time.seconds_since_startup() as f32/3.0).sin()/10.0);
-        let rot_z = Quat::from_rotation_z((time.seconds_since_startup() as f32/4.0).sin()/10.0);
-        *transform = *transform * Transform::from_rotation(rot_x*rot_y*rot_z);
+    for mut transform in query.iter_mut() {
+        let rot_x = Quat::from_rotation_x((time.seconds_since_startup() as f32 / 5.0).sin() / 10.0);
+        let rot_y = Quat::from_rotation_y((time.seconds_since_startup() as f32 / 3.0).sin() / 10.0);
+        let rot_z = Quat::from_rotation_z((time.seconds_since_startup() as f32 / 4.0).sin() / 10.0);
+        *transform = *transform * Transform::from_rotation(rot_x * rot_y * rot_z);
     }
 }
