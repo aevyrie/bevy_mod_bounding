@@ -79,9 +79,9 @@ fn setup(
 
 fn rotation_system(time: Res<Time>, mut query: Query<&mut Transform, With<Rotator>>) {
     for mut transform in query.iter_mut(){
-        let rotx = Quat::from_rotation_x((time.seconds_since_startup() as f32/5.0).sin()/10.0);
-        let roty = Quat::from_rotation_y((time.seconds_since_startup() as f32/3.0).sin()/10.0);
-        let rotz = Quat::from_rotation_z((time.seconds_since_startup() as f32/4.0).sin()/10.0);
-        *transform = *transform * Transform::from_rotation(rotx*roty*rotz);
+        let rot_x = Quat::from_rotation_x((time.seconds_since_startup() as f32/5.0).sin()/10.0);
+        let rot_y = Quat::from_rotation_y((time.seconds_since_startup() as f32/3.0).sin()/10.0);
+        let rot_z = Quat::from_rotation_z((time.seconds_since_startup() as f32/4.0).sin()/10.0);
+        *transform = *transform * Transform::from_rotation(rot_x*rot_y*rot_z);
     }
 }
