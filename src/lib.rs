@@ -1,6 +1,6 @@
 //mod boxes;
-mod debug;
 mod bounding_sphere;
+mod debug;
 use bevy::prelude::*;
 use std::marker::PhantomData;
 //use boxes::*;
@@ -14,24 +14,11 @@ pub struct BoundingVolumePlugin;
 impl Plugin for BoundingVolumePlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_system_to_stage(
-            stage::UPDATE,
+            stage::PRE_UPDATE,
             spawn_bounding_volumes::<BoundingSphere>.system(),
         )
-        .add_system_to_stage(stage::POST_UPDATE, BoundingSphere::update.system());
-    }
-}
-
-pub struct BoundingVolumeDebugPlugin;
-impl Plugin for BoundingVolumeDebugPlugin {
-    fn build(&self, app: &mut AppBuilder) {
-        app.add_system_to_stage(
-            stage::POST_UPDATE,
-            spawn_debug_meshes::<BoundingSphere>.system(),
-        )
-        .add_system_to_stage(
-            stage::POST_UPDATE,
-            update_debug_mesh::<BoundingSphere>.system(),
-        );
+        .add_system_to_stage(stage::POST_UPDATE, BoundingSphere::update.system())
+        .add_system_to_stage(stage::UPDATE, update_debug_meshes::<BoundingSphere>.system());
     }
 }
 
@@ -62,7 +49,10 @@ pub fn spawn_bounding_volumes<T: 'static + IsBoundingVolume + Send + Sync>(
     meshes: Res<Assets<Mesh>>,
     query: Query<
         (&Handle<Mesh>, &GlobalTransform, Entity),
-        (Or<(Added<BoundingVolume<T>>, With<LoadingMesh>)>, Without<T>)
+        (
+            Or<(Added<BoundingVolume<T>>, With<LoadingMesh>)>,
+            Without<T>,
+        ),
     >,
 ) {
     for (handle, transform, entity) in query.iter() {

@@ -8,7 +8,11 @@ use core::panic;
 /// Defines a bounding sphere with a centered origin and a radius..
 #[derive(Debug, Clone)]
 pub struct BoundingSphere {
+    /// Origin of the sphere in mesh space. The intent is that the bounding volume will be queried
+    /// along with its [GlobalTransform], so the origin of the sphere will be transformed to the
+    /// world position of the mesh, and the radius can be used to determine the bounding volume.
     origin: Vec3,
+    /// Radius of the sphere that bounds the mesh as it appears in world after being transformed
     radius: f32,
 }
 impl BoundingSphere {
@@ -35,7 +39,6 @@ impl BoundingSphere {
         }
     }
 }
-
 
 /// Create a valid boundary sphere from a mesh and globaltransform.
 impl IsBoundingVolume for BoundingSphere {
@@ -110,9 +113,7 @@ impl IsBoundingVolume for BoundingSphere {
             radius: self.radius,
             ..Default::default()
         });
-        let inverse_transform = Transform::from_matrix(
-            Mat4::from_scale(transform.scale).inverse(),
-        );
+        let inverse_transform = Transform::from_matrix(Mat4::from_scale(transform.scale).inverse());
         match mesh.attribute_mut(Mesh::ATTRIBUTE_POSITION) {
             None => panic!("Mesh does not contain vertex positions"),
             Some(vertex_values) => match vertex_values {
