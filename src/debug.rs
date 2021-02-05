@@ -4,6 +4,8 @@ use bevy::prelude::*;
 /// Marks the debug bounding volume mesh of a BoundingVolumeDebug entity
 pub struct BoundingVolumeDebugMesh;
 
+/// Updates existing debug meshes and creates new debug meshes on entities with a bounding volume
+/// component marked with [BoundingVolumeDebug] and no existing debug mesh.
 pub fn update_debug_meshes<T: 'static + IsBoundingVolume + Send + Sync>(
     commands: &mut Commands,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -28,6 +30,7 @@ pub fn update_debug_meshes<T: 'static + IsBoundingVolume + Send + Sync>(
             }
         }
         if !updated_existing_child {
+            // if the entity had a child, we don't need to create a new one
             let mesh_handle = meshes.add(bound_vol.new_debug_mesh(transform));
             commands.set_current_entity(entity);
             commands.with_children(|parent| {

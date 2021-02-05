@@ -7,11 +7,11 @@ use core::panic;
 
 /// Defines a bounding sphere with a center point coordinate and a radius
 #[derive(Debug, Clone)]
-pub struct AxisAlignedBoundingBox {
+pub struct AxisAlignedBB {
     origin: Vec3,
     dimensions: Vec3,
 }
-impl AxisAlignedBoundingBox {
+impl AxisAlignedBB {
     pub fn origin(&self) -> Vec3 {
         self.origin
     }
@@ -20,7 +20,7 @@ impl AxisAlignedBoundingBox {
     }
     /// Given a set of points, fit an axis oriented bounding box to the mesh by finding the extents
     /// of the mesh.
-    fn compute_aabb(vertices: &Vec<Vec3>) -> AxisAlignedBoundingBox {
+    fn compute_aabb(vertices: &Vec<Vec3>) -> AxisAlignedBB {
         let mut maximums = Vec3::new(f32::MIN, f32::MIN, f32::MIN);
         let mut minimums = Vec3::new(f32::MAX, f32::MAX, f32::MAX);
         for vertex in vertices.iter() {
@@ -29,14 +29,14 @@ impl AxisAlignedBoundingBox {
         }
         let dimensions = maximums;
         let origin = minimums;
-        AxisAlignedBoundingBox { origin, dimensions }
+        AxisAlignedBB { origin, dimensions }
     }
     /// Updates the bounding volume definition for all [AxisAlignedBoundingBox]s if their associated
     /// [GlobalTransform] or [Mesh] handle are changed.
     pub fn update(
         meshes: Res<Assets<Mesh>>,
         mut query: Query<
-            (&mut AxisAlignedBoundingBox, &GlobalTransform, &Handle<Mesh>),
+            (&mut AxisAlignedBB, &GlobalTransform, &Handle<Mesh>),
             Or<(Changed<GlobalTransform>, Changed<Handle<Mesh>>)>,
         >,
     ) {
@@ -44,12 +44,12 @@ impl AxisAlignedBoundingBox {
             let mesh = meshes
                 .get(handle)
                 .expect("Bounding volume had bad mesh handle");
-            *bounding_vol = AxisAlignedBoundingBox::new(mesh, transform);
+            *bounding_vol = AxisAlignedBB::new(mesh, transform);
         }
     }
 }
 
-impl IsBoundingVolume for AxisAlignedBoundingBox {
+impl IsBoundingVolume for AxisAlignedBB {
     fn new(mesh: &Mesh, transform: &GlobalTransform) -> Self {
         let transform_matrix = Transform {
             translation: Vec3::zero(),

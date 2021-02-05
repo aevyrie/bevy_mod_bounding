@@ -8,13 +8,13 @@ use std::f32::consts::PI;
 
 /// Defines a bounding sphere with a center point coordinate and a radius
 #[derive(Debug, Clone)]
-pub struct OrientedBoundingBox {
+pub struct OrientedBB {
     origin: Vec3,
     dimensions: Vec3,
     orientation: Quat,
 }
 
-impl OrientedBoundingBox {
+impl OrientedBB {
     pub fn origin(&self) -> Vec3 {
         self.origin
     }
@@ -24,7 +24,7 @@ impl OrientedBoundingBox {
     pub fn orientation(&self) -> Quat {
         self.orientation
     }
-    fn compute_obb(vertices: &Vec<Vec3>, transform: &Mat4) -> OrientedBoundingBox {
+    fn compute_obb(vertices: &Vec<Vec3>, transform: &Mat4) -> OrientedBB {
         let mut maximums = Vec3::new(f32::MIN, f32::MIN, f32::MIN);
         let mut minimums = Vec3::new(f32::MAX, f32::MAX, f32::MAX);
         for vertex in vertices.iter() {
@@ -34,7 +34,7 @@ impl OrientedBoundingBox {
         let dimensions = maximums;
         let origin = minimums;
         let orientation = Quat::from_rotation_mat4(transform);
-        OrientedBoundingBox {
+        OrientedBB {
             origin,
             dimensions,
             orientation,
@@ -43,21 +43,18 @@ impl OrientedBoundingBox {
 
     pub fn update(
         meshes: Res<Assets<Mesh>>,
-        mut query: Query<
-            (&mut OrientedBoundingBox, &GlobalTransform, &Handle<Mesh>),
-            Changed<Handle<Mesh>>,
-        >,
+        mut query: Query<(&mut OrientedBB, &GlobalTransform, &Handle<Mesh>), Changed<Handle<Mesh>>>,
     ) {
         for (mut bounding_vol, transform, handle) in query.iter_mut() {
             let mesh = meshes
                 .get(handle)
                 .expect("Bounding volume had bad mesh handle");
-            *bounding_vol = OrientedBoundingBox::new(mesh, transform);
+            *bounding_vol = OrientedBB::new(mesh, transform);
         }
     }
 }
 
-impl IsBoundingVolume for OrientedBoundingBox {
+impl IsBoundingVolume for OrientedBB {
     fn new(mesh: &Mesh, _transform: &GlobalTransform) -> Self {
         // Grab a vector of vertex coordinates we can use to iterate through
         if mesh.primitive_topology() != PrimitiveTopology::TriangleList {
@@ -87,7 +84,7 @@ impl IsBoundingVolume for OrientedBoundingBox {
                         2 => Mat4::from_rotation_z(angle as f32 * 2.0 * PI / 360.0),
                         _ => panic!("Unreachable match arm reached!"),
                     };
-                let obb = OrientedBoundingBox::compute_obb(&vertices, &new_orientation);
+                let obb = OrientedBB::compute_obb(&vertices, &new_orientation);
                 let diff = obb.dimensions - obb.origin;
                 let new_volume = diff.x * diff.y * diff.z;
                 if new_volume < volume {
@@ -96,7 +93,7 @@ impl IsBoundingVolume for OrientedBoundingBox {
                 }
             }
         }
-        OrientedBoundingBox::compute_obb(&vertices, &orientation)
+        OrientedBB::compute_obb(&vertices, &orientation)
     }
 
     fn new_debug_mesh(&self, _transform: &GlobalTransform) -> Mesh {

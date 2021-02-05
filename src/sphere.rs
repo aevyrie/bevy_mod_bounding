@@ -7,7 +7,7 @@ use core::panic;
 
 /// Defines a bounding sphere with a centered origin and a radius..
 #[derive(Debug, Clone)]
-pub struct BoundingSphere {
+pub struct BSphere {
     /// Origin of the sphere in mesh space. The intent is that the bounding volume will be queried
     /// along with its [GlobalTransform], so the origin of the sphere will be transformed to the
     /// world position of the mesh, and the radius can be used to determine the bounding volume.
@@ -15,7 +15,7 @@ pub struct BoundingSphere {
     /// Radius of the sphere that bounds the mesh as it appears in world after being transformed
     radius: f32,
 }
-impl BoundingSphere {
+impl BSphere {
     pub fn origin(&self) -> Vec3 {
         self.origin
     }
@@ -27,7 +27,7 @@ impl BoundingSphere {
     pub fn update(
         meshes: Res<Assets<Mesh>>,
         mut sphere_query: Query<
-            (&mut BoundingSphere, &GlobalTransform, &Handle<Mesh>),
+            (&mut BSphere, &GlobalTransform, &Handle<Mesh>),
             Or<(Changed<GlobalTransform>, Changed<Handle<Mesh>>)>,
         >,
     ) {
@@ -35,13 +35,13 @@ impl BoundingSphere {
             let mesh = meshes
                 .get(handle)
                 .expect("Bounding volume had bad mesh handle");
-            *bounding_sphere = BoundingSphere::new(mesh, transform);
+            *bounding_sphere = BSphere::new(mesh, transform);
         }
     }
 }
 
 /// Create a valid boundary sphere from a mesh and globaltransform.
-impl IsBoundingVolume for BoundingSphere {
+impl IsBoundingVolume for BSphere {
     fn new(mesh: &Mesh, transform: &GlobalTransform) -> Self {
         // Grab a vector of vertex coordinates we can use to iterate through
         if mesh.primitive_topology() != PrimitiveTopology::TriangleList {
@@ -79,7 +79,7 @@ impl IsBoundingVolume for BoundingSphere {
             }
         });
         // Construct a bounding sphere using these two points as the poles
-        let mut sphere = BoundingSphere {
+        let mut sphere = BSphere {
             origin: point_y.lerp(point_z, 0.5),
             radius: point_y.distance(point_z) / 2.0,
         };
@@ -98,7 +98,7 @@ impl IsBoundingVolume for BoundingSphere {
             if point_dist > sphere.radius {
                 let radius_new = (sphere.radius + point_dist) / 2.0;
                 let lerp_ratio = (point_dist - radius_new) / point_dist;
-                sphere = BoundingSphere {
+                sphere = BSphere {
                     origin: sphere.origin.lerp(point_n, lerp_ratio),
                     radius: radius_new,
                 };
