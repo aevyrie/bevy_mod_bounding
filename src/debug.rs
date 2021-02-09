@@ -29,15 +29,18 @@ pub fn update_debug_meshes<T: 'static + IsBoundingVolume + Send + Sync>(
                 }
             }
         }
+        // if the entity had a child, we don't need to create a new one
         if !updated_existing_child {
-            // if the entity had a child, we don't need to create a new one
             let mesh_handle = meshes.add(bound_vol.new_debug_mesh(transform));
             commands.set_current_entity(entity);
             commands.with_children(|parent| {
                 parent
                     .spawn(PbrBundle {
                         mesh: mesh_handle,
-                        material: materials.add(Color::rgb(1.0, 0.0, 1.0).into()),
+                        material: materials.add(StandardMaterial {
+                            albedo: Color::rgb(1.0, 0.0, 1.0),
+                            ..Default::default()
+                        }),
                         ..Default::default()
                     })
                     .with(BoundingVolumeDebugMesh);

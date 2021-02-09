@@ -1,3 +1,4 @@
+use crate::axis_aligned_box::AxisAlignedBB;
 use crate::IsBoundingVolume;
 use bevy::{
     prelude::*,
@@ -6,50 +7,73 @@ use bevy::{
 use core::panic;
 use std::f32::consts::PI;
 
-/// Defines a bounding sphere with a center point coordinate and a radius
-#[derive(Debug, Clone)]
+/// Defines a bounding box, oriented to minimize the bounded volume. This bounding box is expensive
+/// to compute, but cheap to update.
+///
+/// The volume of an OBB is <= to the AABB of the same mesh. It is similar to an AABB, but the
+/// orientation is determined not by the world axes but with respect to the mesh itself, so the
+/// bounding box definition only changes if the underlying mesh changes. The entire bounding volume
+/// can simply be transformed with the current [GlobalTransform] of the bounded mesh, lazily.
+///
+/// This structure stores the AABB of the mesh in mesh space, with the mesh oriented to minimize
+/// the volume of the bounding box. The properties are stored in mesh space to minimize rounding
+/// error, and make it easy to defer recomputing the bounding volume until the mesh itself is
+/// changed.
+#[derive(Debug, Clone, Default)]
 pub struct OrientedBB {
-    origin: Vec3,
-    dimensions: Vec3,
+    aabb: AxisAlignedBB,
+    /// The orientation of the mesh that minimizes the AABB.
+    ///
+    /// ## Note
+    /// This is *not* the orientation of the bounding box! You probably want the conjugate of
+    /// this quaternion.
     orientation: Quat,
 }
 
 impl OrientedBB {
-    pub fn origin(&self) -> Vec3 {
-        self.origin
+    /// Returns the [AxisAlignedBB] of this [OrientedBB] in ***mesh space***.
+    pub fn mesh_aabb(&self) -> &AxisAlignedBB {
+        &self.aabb
     }
-    pub fn dimensions(&self) -> Vec3 {
-        self.dimensions
-    }
+    /// Returns the orientation of the [OrientedBB] in ***mesh space***.
+    ///
+    /// ## Note
+    /// This orientation tells you how to rotate the [AxisAlignedBB] that defines the [OrientedBB]
+    /// so that the bounding box matches its [Mesh]s orientation.
     pub fn orientation(&self) -> Quat {
-        self.orientation
+        self.orientation.conjugate()
     }
-    fn compute_obb(vertices: &Vec<Vec3>, transform: &Mat4) -> OrientedBB {
+    /// Returns an [AxisAlignedBB] that contains this [OrientedBB]. In other words, this returns
+    /// the AABB of this OBB.
+    ///
+    /// ## Y tho
+    /// This is much faster than calculating the AABB of a high-poly mesh every time it moves.
+    /// Because the [OrientedBB] only needs to recompute when the mesh itself changes, by taking
+    /// the AABB of the OBB, and not the mesh, we only need to iterate through all mesh vertices
+    /// when the mesh changes, but we still get a bounding box that is aligned to the world axes.
+    /// This comes with a tradeoff - because we are finding the AABB of the OBB, the bounding box
+    /// will be more conservative, and will be larger than the AABB of the mesh itself.
+    pub fn outer_aabb(&self) -> AxisAlignedBB {
+        let axis_aligned_vertices = self.aabb.vertices();
+        let oriented_vertices = axis_aligned_vertices
+            .iter()
+            .map(|vertex| self.orientation.mul_vec3(*vertex))
+            .collect();
+        AxisAlignedBB::compute_aabb(&oriented_vertices)
+    }
+    /// Given a list of mesh vertices, and the orientation of this mesh, constructs an oriented
+    /// bounding box.
+    fn compute_obb(vertices: &Vec<Vec3>, orientation: Quat) -> OrientedBB {
         let mut maximums = Vec3::new(f32::MIN, f32::MIN, f32::MIN);
         let mut minimums = Vec3::new(f32::MAX, f32::MAX, f32::MAX);
+        let transform = Mat4::from_quat(orientation);
         for vertex in vertices.iter() {
             maximums = maximums.max(transform.transform_point3(*vertex));
             minimums = minimums.min(transform.transform_point3(*vertex));
         }
-        let dimensions = maximums;
-        let origin = minimums;
-        let orientation = Quat::from_rotation_mat4(transform);
         OrientedBB {
-            origin,
-            dimensions,
+            aabb: AxisAlignedBB::from_extents(minimums, maximums),
             orientation,
-        }
-    }
-
-    pub fn update(
-        meshes: Res<Assets<Mesh>>,
-        mut query: Query<(&mut OrientedBB, &GlobalTransform, &Handle<Mesh>), Changed<Handle<Mesh>>>,
-    ) {
-        for (mut bounding_vol, transform, handle) in query.iter_mut() {
-            let mesh = meshes
-                .get(handle)
-                .expect("Bounding volume had bad mesh handle");
-            *bounding_vol = OrientedBB::new(mesh, transform);
         }
     }
 }
@@ -71,7 +95,7 @@ impl IsBoundingVolume for OrientedBB {
             },
         };
 
-        let mut orientation = Mat4::from_quat(Quat::identity());
+        let mut orientation = Quat::identity();
         let mut volume = f32::MAX;
         for step in 0..3 {
             // Rotate about y-axis  (turntable) until the smallest volume box is found
@@ -79,13 +103,13 @@ impl IsBoundingVolume for OrientedBB {
             for angle in (0..90).step_by(5) {
                 let new_orientation = orientation_temp
                     * match step {
-                        0 => Mat4::from_rotation_x(angle as f32 * 2.0 * PI / 360.0),
-                        1 => Mat4::from_rotation_y(angle as f32 * 2.0 * PI / 360.0),
-                        2 => Mat4::from_rotation_z(angle as f32 * 2.0 * PI / 360.0),
+                        0 => Quat::from_rotation_x(angle as f32 * 2.0 * PI / 360.0),
+                        1 => Quat::from_rotation_y(angle as f32 * 2.0 * PI / 360.0),
+                        2 => Quat::from_rotation_z(angle as f32 * 2.0 * PI / 360.0),
                         _ => panic!("Unreachable match arm reached!"),
                     };
-                let obb = OrientedBB::compute_obb(&vertices, &new_orientation);
-                let diff = obb.dimensions - obb.origin;
+                let obb = OrientedBB::compute_obb(&vertices, new_orientation);
+                let diff = obb.mesh_aabb().maximums() - obb.mesh_aabb().minimums();
                 let new_volume = diff.x * diff.y * diff.z;
                 if new_volume < volume {
                     volume = new_volume;
@@ -93,17 +117,17 @@ impl IsBoundingVolume for OrientedBB {
                 }
             }
         }
-        OrientedBB::compute_obb(&vertices, &orientation)
+        OrientedBB::compute_obb(&vertices, orientation)
     }
 
     fn new_debug_mesh(&self, _transform: &GlobalTransform) -> Mesh {
         let mut mesh = Mesh::from(shape::Box {
-            max_x: self.dimensions.x,
-            max_y: self.dimensions.y,
-            max_z: self.dimensions.z,
-            min_x: self.origin.x,
-            min_y: self.origin.y,
-            min_z: self.origin.z,
+            max_x: self.mesh_aabb().maximums().x,
+            max_y: self.mesh_aabb().maximums().y,
+            max_z: self.mesh_aabb().maximums().z,
+            min_x: self.mesh_aabb().minimums().x,
+            min_y: self.mesh_aabb().minimums().y,
+            min_z: self.mesh_aabb().minimums().z,
         });
         let transform = Mat4::from_quat(self.orientation).inverse();
         match mesh.attribute_mut(Mesh::ATTRIBUTE_POSITION) {
@@ -121,5 +145,13 @@ impl IsBoundingVolume for OrientedBB {
             },
         };
         mesh
+    }
+
+    fn update_on_mesh_change(&self, mesh: &Mesh, transform: &GlobalTransform) -> Self {
+        Self::new(mesh, transform)
+    }
+
+    fn update_on_transform_change(&self, _mesh: &Mesh, _transform: &GlobalTransform) -> Self {
+        self.clone()
     }
 }

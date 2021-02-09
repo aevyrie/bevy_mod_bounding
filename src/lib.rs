@@ -2,6 +2,7 @@ mod axis_aligned_box;
 mod debug;
 mod oriented_box;
 mod sphere;
+
 use bevy::prelude::{stage::*, *};
 use debug::update_debug_meshes;
 use std::marker::PhantomData;
@@ -10,20 +11,15 @@ pub use axis_aligned_box::AxisAlignedBB;
 pub use oriented_box::OrientedBB;
 pub use sphere::BSphere;
 
-//pub use debug::BoundingVolumeDebug;
-
-pub struct BoundingVolumePlugin;
-impl Plugin for BoundingVolumePlugin {
+#[derive(Default)]
+pub struct BoundingVolumePlugin<T: IsBoundingVolume> {
+    marker: std::marker::PhantomData<T>,
+}
+impl<T: 'static + Send + Sync + IsBoundingVolume> Plugin for BoundingVolumePlugin<T> {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_system_to_stage(PRE_UPDATE, spawn_bounds::<BSphere>.system())
-            .add_system_to_stage(PRE_UPDATE, spawn_bounds::<AxisAlignedBB>.system())
-            .add_system_to_stage(PRE_UPDATE, spawn_bounds::<OrientedBB>.system())
-            .add_system_to_stage(POST_UPDATE, BSphere::update.system())
-            .add_system_to_stage(POST_UPDATE, AxisAlignedBB::update.system())
-            .add_system_to_stage(POST_UPDATE, OrientedBB::update.system())
-            .add_system_to_stage(POST_UPDATE, debug::update_debug_meshes::<BSphere>.system())
-            .add_system_to_stage(POST_UPDATE, update_debug_meshes::<AxisAlignedBB>.system())
-            .add_system_to_stage(POST_UPDATE, update_debug_meshes::<OrientedBB>.system());
+        app.add_system_to_stage(PRE_UPDATE, spawn::<T>.system())
+            .add_system_to_stage(POST_UPDATE, update::<T>.system())
+            .add_system_to_stage(POST_UPDATE, update_debug_meshes::<T>.system());
     }
 }
 
@@ -43,13 +39,17 @@ pub trait IsBoundingVolume {
     fn new(mesh: &Mesh, transform: &GlobalTransform) -> Self;
     /// Generate a [Mesh] from the [BoundingVolume]'s own definition.
     fn new_debug_mesh(&self, transform: &GlobalTransform) -> Mesh;
+    /// Generate a bounding volume when the [BoundingVolume] changes.
+    fn update_on_mesh_change(&self, mesh: &Mesh, transform: &GlobalTransform) -> Self;
+    /// Generate a bounding volume when the [Mesh] changes.
+    fn update_on_transform_change(&self, mesh: &Mesh, transform: &GlobalTransform) -> Self;
 }
 
 /// Marks new BoundingVolumes that are awaiting their mesh to load
 pub struct LoadingMesh;
 
 /// Use generics to spawn a child entity with component type T
-pub fn spawn_bounds<T: 'static + IsBoundingVolume + Send + Sync>(
+pub fn spawn<T: 'static + IsBoundingVolume + Send + Sync>(
     commands: &mut Commands,
     meshes: Res<Assets<Mesh>>,
     query: Query<
@@ -68,12 +68,36 @@ pub fn spawn_bounds<T: 'static + IsBoundingVolume + Send + Sync>(
                 commands.with(T::new(mesh, transform));
                 commands.remove_one::<LoadingMesh>(entity);
                 commands.remove_one::<BoundingVolume<T>>(entity);
-                println!("mesh loaded");
             }
             None => {
                 commands.set_current_entity(entity);
                 commands.with(LoadingMesh);
             }
+        }
+    }
+}
+
+fn update<T: 'static + IsBoundingVolume + Send + Sync>(
+    meshes: Res<Assets<Mesh>>,
+    mut query: QuerySet<(
+        Query<(&mut T, &GlobalTransform, &Handle<Mesh>, Entity), Changed<GlobalTransform>>,
+        Query<(&mut T, &GlobalTransform, &Handle<Mesh>, Entity), Changed<Handle<Mesh>>>,
+    )>,
+) {
+    let mut changed_bounding_vols: Vec<Entity> = Vec::new();
+    for (mut bounding_vol, transform, handle, entity) in query.q0_mut().iter_mut() {
+        let mesh = meshes
+            .get(handle)
+            .expect("Bounding volume had bad mesh handle");
+        *bounding_vol = bounding_vol.update_on_transform_change(mesh, transform);
+        changed_bounding_vols.push(entity);
+    }
+    for (mut bounding_vol, transform, handle, entity) in query.q1_mut().iter_mut() {
+        if !changed_bounding_vols.contains(&entity) {
+            let mesh = meshes
+                .get(handle)
+                .expect("Bounding volume had bad mesh handle");
+            *bounding_vol = bounding_vol.update_on_mesh_change(mesh, transform);
         }
     }
 }

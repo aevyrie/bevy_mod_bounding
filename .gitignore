@@ -1,6 +1,7 @@
 /target
 Cargo.lock
 .cargo/config
+.cargo/config.toml
 .vscode
 .cargo/credentials.toml
 .cargo/config_fast_compile

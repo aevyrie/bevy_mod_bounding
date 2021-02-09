@@ -8,7 +8,9 @@ use bevy_mod_bounding::*;
 fn main() {
     App::build()
         .add_plugins(DefaultPlugins)
-        .add_plugin(BoundingVolumePlugin)
+        .add_plugin(BoundingVolumePlugin::<BSphere>::default())
+        .add_plugin(BoundingVolumePlugin::<AxisAlignedBB>::default())
+        .add_plugin(BoundingVolumePlugin::<OrientedBB>::default())
         .add_startup_system(setup.system())
         .add_system(rotation_system.system())
         .run();
@@ -21,15 +23,8 @@ fn setup(
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    let mesh_path = "models/waterbottle/WaterBottle.gltf#Mesh0/Primitive0";
     let _scenes: Vec<HandleUntyped> = asset_server.load_folder("models").unwrap();
-    let mesh_handle1 =
-        asset_server.get_handle("models/waterbottle/WaterBottle.gltf#Mesh0/Primitive0");
-    let mesh_handle2 =
-        asset_server.get_handle("models/waterbottle/WaterBottle.gltf#Mesh0/Primitive0");
-    let mesh_handle3 =
-        asset_server.get_handle("models/waterbottle/WaterBottle.gltf#Mesh0/Primitive0");
-    let mesh_handle4 =
-        asset_server.get_handle("models/waterbottle/WaterBottle.gltf#Mesh0/Primitive0");
     commands
         .spawn(PerspectiveCameraBundle {
             transform: Transform::from_matrix(Mat4::face_toward(
@@ -40,7 +35,7 @@ fn setup(
             ..Default::default()
         })
         .spawn(PbrBundle {
-            mesh: mesh_handle1,
+            mesh: asset_server.get_handle(mesh_path),
             material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
             transform: Transform::from_translation(Vec3::new(-1.5, 0.0, 0.0)),
             ..Default::default()
@@ -49,7 +44,7 @@ fn setup(
         .with(BoundingVolumeDebug)
         .with(Rotator)
         .spawn(PbrBundle {
-            mesh: mesh_handle2,
+            mesh: asset_server.get_handle(mesh_path),
             material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
             transform: Transform::from_translation(Vec3::new(-0.5, 0.0, 0.0)),
             ..Default::default()
@@ -58,7 +53,7 @@ fn setup(
         .with(BoundingVolumeDebug)
         .with(Rotator)
         .spawn(PbrBundle {
-            mesh: mesh_handle3,
+            mesh: asset_server.get_handle(mesh_path),
             material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
             transform: Transform::from_translation(Vec3::new(0.5, 0.0, 0.0)),
             ..Default::default()
@@ -67,7 +62,7 @@ fn setup(
         .with(BoundingVolumeDebug)
         .with(Rotator)
         .spawn(PbrBundle {
-            mesh: mesh_handle4,
+            mesh: asset_server.get_handle(mesh_path),
             material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
             transform: Transform::from_translation(Vec3::new(1.5, 0.0, 0.0)),
             ..Default::default()

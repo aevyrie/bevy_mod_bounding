@@ -6,37 +6,21 @@ use bevy::{
 use core::panic;
 
 /// Defines a bounding sphere with a centered origin and a radius..
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct BSphere {
     /// Origin of the sphere in mesh space. The intent is that the bounding volume will be queried
     /// along with its [GlobalTransform], so the origin of the sphere will be transformed to the
     /// world position of the mesh, and the radius can be used to determine the bounding volume.
-    origin: Vec3,
+    mesh_space_origin: Vec3,
     /// Radius of the sphere that bounds the mesh as it appears in world after being transformed
     radius: f32,
 }
 impl BSphere {
     pub fn origin(&self) -> Vec3 {
-        self.origin
+        self.mesh_space_origin
     }
     pub fn radius(&self) -> f32 {
         self.radius
-    }
-    /// Updates the bounding volume definition for all [BoundingSphere]s if their associated
-    /// [GlobalTransform] or [Mesh] handle are changed.
-    pub fn update(
-        meshes: Res<Assets<Mesh>>,
-        mut sphere_query: Query<
-            (&mut BSphere, &GlobalTransform, &Handle<Mesh>),
-            Or<(Changed<GlobalTransform>, Changed<Handle<Mesh>>)>,
-        >,
-    ) {
-        for (mut bounding_sphere, transform, handle) in sphere_query.iter_mut() {
-            let mesh = meshes
-                .get(handle)
-                .expect("Bounding volume had bad mesh handle");
-            *bounding_sphere = BSphere::new(mesh, transform);
-        }
     }
 }
 
@@ -80,26 +64,26 @@ impl IsBoundingVolume for BSphere {
         });
         // Construct a bounding sphere using these two points as the poles
         let mut sphere = BSphere {
-            origin: point_y.lerp(point_z, 0.5),
+            mesh_space_origin: point_y.lerp(point_z, 0.5),
             radius: point_y.distance(point_z) / 2.0,
         };
         // Iteratively adjust sphere until it encloses all points
         loop {
             // Find the furthest point from the origin
             let point_n = vertices.iter().fold(point_x, |acc, x| {
-                if x.distance(sphere.origin) >= acc.distance(sphere.origin) {
+                if x.distance(sphere.mesh_space_origin) >= acc.distance(sphere.mesh_space_origin) {
                     *x
                 } else {
                     acc
                 }
             });
             // If the furthest point is outside the sphere, we need to adjust it
-            let point_dist = point_n.distance(sphere.origin);
+            let point_dist = point_n.distance(sphere.mesh_space_origin);
             if point_dist > sphere.radius {
                 let radius_new = (sphere.radius + point_dist) / 2.0;
                 let lerp_ratio = (point_dist - radius_new) / point_dist;
                 sphere = BSphere {
-                    origin: sphere.origin.lerp(point_n, lerp_ratio),
+                    mesh_space_origin: sphere.mesh_space_origin.lerp(point_n, lerp_ratio),
                     radius: radius_new,
                 };
             } else {
@@ -113,7 +97,7 @@ impl IsBoundingVolume for BSphere {
             radius: self.radius,
             ..Default::default()
         });
-        let inverse_transform = Transform::from_matrix(
+        let inverse_transform = GlobalTransform::from_matrix(
             Mat4::from_scale_rotation_translation(
                 transform.scale,
                 transform.rotation,
@@ -136,5 +120,15 @@ impl IsBoundingVolume for BSphere {
             },
         };
         mesh
+    }
+
+    fn update_on_mesh_change(&self, mesh: &Mesh, transform: &GlobalTransform) -> Self {
+        Self::new(mesh, transform)
+    }
+
+    fn update_on_transform_change(&self, mesh: &Mesh, transform: &GlobalTransform) -> Self {
+        // This can be optimized in the future to rescale the bounding sphere based on the
+        // transform instead of sampling the mesh all over again.
+        Self::new(mesh, transform)
     }
 }

@@ -5,47 +5,44 @@ use bevy::{
 };
 use core::panic;
 
-/// Defines a bounding sphere with a center point coordinate and a radius
-#[derive(Debug, Clone)]
+/// Defines
+#[derive(Debug, Clone, Default)]
 pub struct AxisAlignedBB {
-    origin: Vec3,
-    dimensions: Vec3,
+    minimums: Vec3,
+    maximums: Vec3,
 }
 impl AxisAlignedBB {
-    pub fn origin(&self) -> Vec3 {
-        self.origin
+    pub fn minimums(&self) -> Vec3 {
+        self.minimums
     }
-    pub fn dimensions(&self) -> Vec3 {
-        self.dimensions
+    pub fn maximums(&self) -> Vec3 {
+        self.maximums
+    }
+    pub fn vertices(&self) -> [Vec3; 8] {
+        [
+            Vec3::new(self.maximums.x, self.maximums.y, self.maximums.z),
+            Vec3::new(self.maximums.x, self.maximums.y, self.minimums.z),
+            Vec3::new(self.maximums.x, self.minimums.y, self.maximums.z),
+            Vec3::new(self.maximums.x, self.minimums.y, self.minimums.z),
+            Vec3::new(self.minimums.x, self.maximums.y, self.maximums.z),
+            Vec3::new(self.minimums.x, self.maximums.y, self.minimums.z),
+            Vec3::new(self.minimums.x, self.minimums.y, self.maximums.z),
+            Vec3::new(self.minimums.x, self.minimums.y, self.minimums.z),
+        ]
+    }
+    pub fn from_extents(minimums: Vec3, maximums: Vec3) -> Self {
+        AxisAlignedBB { minimums, maximums }
     }
     /// Given a set of points, fit an axis oriented bounding box to the mesh by finding the extents
     /// of the mesh.
-    fn compute_aabb(vertices: &Vec<Vec3>) -> AxisAlignedBB {
+    pub fn compute_aabb(vertices: &Vec<Vec3>) -> AxisAlignedBB {
         let mut maximums = Vec3::new(f32::MIN, f32::MIN, f32::MIN);
         let mut minimums = Vec3::new(f32::MAX, f32::MAX, f32::MAX);
         for vertex in vertices.iter() {
             maximums = vertex.max(maximums);
             minimums = vertex.min(minimums);
         }
-        let dimensions = maximums;
-        let origin = minimums;
-        AxisAlignedBB { origin, dimensions }
-    }
-    /// Updates the bounding volume definition for all [AxisAlignedBoundingBox]s if their associated
-    /// [GlobalTransform] or [Mesh] handle are changed.
-    pub fn update(
-        meshes: Res<Assets<Mesh>>,
-        mut query: Query<
-            (&mut AxisAlignedBB, &GlobalTransform, &Handle<Mesh>),
-            Or<(Changed<GlobalTransform>, Changed<Handle<Mesh>>)>,
-        >,
-    ) {
-        for (mut bounding_vol, transform, handle) in query.iter_mut() {
-            let mesh = meshes
-                .get(handle)
-                .expect("Bounding volume had bad mesh handle");
-            *bounding_vol = AxisAlignedBB::new(mesh, transform);
-        }
+        AxisAlignedBB { minimums, maximums }
     }
 }
 
@@ -76,12 +73,12 @@ impl IsBoundingVolume for AxisAlignedBB {
 
     fn new_debug_mesh(&self, transform: &GlobalTransform) -> Mesh {
         let mut mesh = Mesh::from(shape::Box {
-            max_x: self.dimensions.x,
-            max_y: self.dimensions.y,
-            max_z: self.dimensions.z,
-            min_x: self.origin.x,
-            min_y: self.origin.y,
-            min_z: self.origin.z,
+            max_x: self.maximums.x,
+            max_y: self.maximums.y,
+            max_z: self.maximums.z,
+            min_x: self.minimums.x,
+            min_y: self.minimums.y,
+            min_z: self.minimums.z,
         });
         let inverse_transform = Transform::from_matrix(
             Mat4::from_scale_rotation_translation(
@@ -106,5 +103,13 @@ impl IsBoundingVolume for AxisAlignedBB {
             },
         };
         mesh
+    }
+
+    fn update_on_mesh_change(&self, mesh: &Mesh, transform: &GlobalTransform) -> Self {
+        Self::new(mesh, transform)
+    }
+
+    fn update_on_transform_change(&self, mesh: &Mesh, transform: &GlobalTransform) -> Self {
+        Self::new(mesh, transform)
     }
 }
