@@ -1,4 +1,4 @@
-use crate::axis_aligned_box::AxisAlignedBB;
+use crate::aabb::AxisAlignedBB;
 use crate::BoundingVolume;
 use bevy::{
     prelude::*,

@@ -1,14 +1,14 @@
-mod axis_aligned_box;
+mod aabb;
 mod debug;
-mod oriented_box;
+mod obb;
 mod sphere;
 
 use bevy::prelude::{stage::*, *};
 use debug::update_debug_meshes;
 use std::marker::PhantomData;
 
-pub use axis_aligned_box::AxisAlignedBB;
-pub use oriented_box::OrientedBB;
+pub use aabb::AxisAlignedBB;
+pub use obb::OrientedBB;
 pub use sphere::BSphere;
 
 #[derive(Default)]
