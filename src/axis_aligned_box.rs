@@ -1,4 +1,4 @@
-use crate::IsBoundingVolume;
+use crate::BoundingVolume;
 use bevy::{
     prelude::*,
     render::{mesh::VertexAttributeValues, pipeline::PrimitiveTopology},
@@ -46,7 +46,7 @@ impl AxisAlignedBB {
     }
 }
 
-impl IsBoundingVolume for AxisAlignedBB {
+impl BoundingVolume for AxisAlignedBB {
     fn new(mesh: &Mesh, transform: &GlobalTransform) -> Self {
         let transform_matrix = Transform {
             translation: Vec3::zero(),
@@ -105,11 +105,7 @@ impl IsBoundingVolume for AxisAlignedBB {
         mesh
     }
 
-    fn update_on_mesh_change(&self, mesh: &Mesh, transform: &GlobalTransform) -> Self {
-        Self::new(mesh, transform)
-    }
-
-    fn update_on_transform_change(&self, mesh: &Mesh, transform: &GlobalTransform) -> Self {
-        Self::new(mesh, transform)
+    fn update_on_transform_change(&mut self, mesh: &Mesh, transform: &GlobalTransform) {
+        *self = Self::new(mesh, transform)
     }
 }

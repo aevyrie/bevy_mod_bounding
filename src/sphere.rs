@@ -1,4 +1,4 @@
-use crate::IsBoundingVolume;
+use crate::BoundingVolume;
 use bevy::{
     prelude::*,
     render::{mesh::VertexAttributeValues, pipeline::PrimitiveTopology},
@@ -12,21 +12,25 @@ pub struct BSphere {
     /// along with its [GlobalTransform], so the origin of the sphere will be transformed to the
     /// world position of the mesh, and the radius can be used to determine the bounding volume.
     mesh_space_origin: Vec3,
-    /// Radius of the sphere that bounds the mesh as it appears in world after being transformed
+    /// Radius of the sphere that bounds the mesh, in mesh space.
     radius: f32,
 }
 impl BSphere {
-    pub fn origin(&self) -> Vec3 {
-        self.mesh_space_origin
+    /// Given the current [GlobalTransform] of the bounded mesh, returns the central origin of the
+    /// sphere that bounds the mesh in world space.
+    pub fn origin(&self, transform: &GlobalTransform) -> Vec3 {
+        self.mesh_space_origin + transform.translation
     }
-    pub fn radius(&self) -> f32 {
-        self.radius
+    /// Given the current [GlobalTransform] of the bounded mesh, returns the radius of the sphere
+    /// that bounds the mesh in world space.
+    pub fn radius(&self, transform: &GlobalTransform) -> f32 {
+        self.radius * transform.scale.max_element()
     }
 }
 
 /// Create a valid boundary sphere from a mesh and globaltransform.
-impl IsBoundingVolume for BSphere {
-    fn new(mesh: &Mesh, transform: &GlobalTransform) -> Self {
+impl BoundingVolume for BSphere {
+    fn new(mesh: &Mesh, _transform: &GlobalTransform) -> Self {
         // Grab a vector of vertex coordinates we can use to iterate through
         if mesh.primitive_topology() != PrimitiveTopology::TriangleList {
             panic!("Non-TriangleList mesh supplied for bounding sphere generation")
@@ -37,9 +41,7 @@ impl IsBoundingVolume for BSphere {
                 VertexAttributeValues::Float3(positions) => positions
                     .iter()
                     .map(|coordinates| {
-                        // We want to keep the mesh close to the origin to prevent adding float
-                        // error, but need the scale to produce a valid bounding sphere.
-                        Vec3::from(*coordinates) * transform.scale
+                        Vec3::from(*coordinates)
                     })
                     .collect(),
                 _ => panic!("Unexpected vertex types in ATTRIBUTE_POSITION"),
@@ -94,7 +96,7 @@ impl IsBoundingVolume for BSphere {
 
     fn new_debug_mesh(&self, transform: &GlobalTransform) -> Mesh {
         let mut mesh = Mesh::from(shape::Icosphere {
-            radius: self.radius,
+            radius: self.radius(transform),
             ..Default::default()
         });
         let inverse_transform = GlobalTransform::from_matrix(
@@ -122,13 +124,7 @@ impl IsBoundingVolume for BSphere {
         mesh
     }
 
-    fn update_on_mesh_change(&self, mesh: &Mesh, transform: &GlobalTransform) -> Self {
-        Self::new(mesh, transform)
-    }
-
-    fn update_on_transform_change(&self, mesh: &Mesh, transform: &GlobalTransform) -> Self {
-        // This can be optimized in the future to rescale the bounding sphere based on the
-        // transform instead of sampling the mesh all over again.
-        Self::new(mesh, transform)
+    fn update_on_transform_change(&mut self, _mesh: &Mesh, _transform: &GlobalTransform) {
+        // No-op
     }
 }

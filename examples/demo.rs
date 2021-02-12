@@ -40,7 +40,7 @@ fn setup(
             transform: Transform::from_translation(Vec3::new(-1.5, 0.0, 0.0)),
             ..Default::default()
         })
-        .with(BoundingVolume::<BSphere>::default())
+        .with(AddBoundingVolume::<BSphere>::default())
         .with(BoundingVolumeDebug)
         .with(Rotator)
         .spawn(PbrBundle {
@@ -49,7 +49,7 @@ fn setup(
             transform: Transform::from_translation(Vec3::new(-0.5, 0.0, 0.0)),
             ..Default::default()
         })
-        .with(BoundingVolume::<AxisAlignedBB>::default())
+        .with(AddBoundingVolume::<AxisAlignedBB>::default())
         .with(BoundingVolumeDebug)
         .with(Rotator)
         .spawn(PbrBundle {
@@ -58,7 +58,7 @@ fn setup(
             transform: Transform::from_translation(Vec3::new(0.5, 0.0, 0.0)),
             ..Default::default()
         })
-        .with(BoundingVolume::<OrientedBB>::default())
+        .with(AddBoundingVolume::<OrientedBB>::default())
         .with(BoundingVolumeDebug)
         .with(Rotator)
         .spawn(PbrBundle {

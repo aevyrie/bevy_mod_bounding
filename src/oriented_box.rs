@@ -1,5 +1,5 @@
 use crate::axis_aligned_box::AxisAlignedBB;
-use crate::IsBoundingVolume;
+use crate::BoundingVolume;
 use bevy::{
     prelude::*,
     render::{mesh::VertexAttributeValues, pipeline::PrimitiveTopology},
@@ -78,7 +78,7 @@ impl OrientedBB {
     }
 }
 
-impl IsBoundingVolume for OrientedBB {
+impl BoundingVolume for OrientedBB {
     fn new(mesh: &Mesh, _transform: &GlobalTransform) -> Self {
         // Grab a vector of vertex coordinates we can use to iterate through
         if mesh.primitive_topology() != PrimitiveTopology::TriangleList {
@@ -147,11 +147,7 @@ impl IsBoundingVolume for OrientedBB {
         mesh
     }
 
-    fn update_on_mesh_change(&self, mesh: &Mesh, transform: &GlobalTransform) -> Self {
-        Self::new(mesh, transform)
-    }
-
-    fn update_on_transform_change(&self, _mesh: &Mesh, _transform: &GlobalTransform) -> Self {
-        self.clone()
+    fn update_on_transform_change(&mut self, _mesh: &Mesh, _transform: &GlobalTransform) {
+        // No-op
     }
 }
