@@ -40,9 +40,7 @@ impl BoundingVolume for BSphere {
             Some(vertex_values) => match &vertex_values {
                 VertexAttributeValues::Float3(positions) => positions
                     .iter()
-                    .map(|coordinates| {
-                        Vec3::from(*coordinates)
-                    })
+                    .map(|coordinates| Vec3::from(*coordinates))
                     .collect(),
                 _ => panic!("Unexpected vertex types in ATTRIBUTE_POSITION"),
             },

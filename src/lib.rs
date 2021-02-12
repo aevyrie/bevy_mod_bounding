@@ -23,13 +23,14 @@ impl<T: 'static + Send + Sync + BoundingVolume> Plugin for BoundingVolumePlugin<
                 POST_UPDATE,
                 update::<T>
                     .system()
-                    .label(format!("update_boundvols{}", std::any::type_name::<T>())),
+                    .after(bevy::transform::TRANSFORM_PROPAGATION)
+                    .label(format!("update_boundvols_{}", std::any::type_name::<T>())),
             )
             .add_system_to_stage(
                 POST_UPDATE,
                 update_debug_meshes::<T>
                     .system()
-                    .after(format!("update_boundvols{}", std::any::type_name::<T>())),
+                    .after(format!("update_boundvols_{}", std::any::type_name::<T>())),
             );
     }
 }
@@ -80,25 +81,27 @@ pub fn spawn<T: 'static + BoundingVolume + Send + Sync>(
 
 fn update<T: 'static + BoundingVolume + Send + Sync>(
     meshes: Res<Assets<Mesh>>,
-    mut query: QuerySet<(
-        Query<(&mut T, &GlobalTransform, &Handle<Mesh>, Entity), Changed<GlobalTransform>>,
-        Query<(&mut T, &GlobalTransform, &Handle<Mesh>, Entity), Changed<Handle<Mesh>>>,
-    )>,
+    changed_mesh_query: Query<Entity, Changed<Handle<Mesh>>>,
+    changed_transform_query: Query<Entity, Changed<GlobalTransform>>,
+    mut bound_vol_query: Query<(&mut T, &GlobalTransform, &Handle<Mesh>)>,
 ) {
-    let mut changed_bounding_vols: Vec<Entity> = Vec::new();
-    for (mut bounding_vol, transform, handle, entity) in query.q0_mut().iter_mut() {
-        let mesh = meshes
-            .get(handle)
-            .expect("Bounding volume had bad mesh handle");
-        bounding_vol.update_on_transform_change(mesh, transform);
-        changed_bounding_vols.push(entity);
-    }
-    for (mut bounding_vol, transform, handle, entity) in query.q1_mut().iter_mut() {
-        if !changed_bounding_vols.contains(&entity) {
+    for entity in changed_mesh_query.iter() {
+        if let Ok((mut bounding_vol, transform, handle)) = bound_vol_query.get_mut(entity) {
             let mesh = meshes
                 .get(handle)
                 .expect("Bounding volume had bad mesh handle");
             *bounding_vol = T::new(mesh, transform);
+        }
+    }
+    for entity in changed_transform_query.iter() {
+        // Only process entities that haven't already been updated.
+        if let Err(_) = changed_mesh_query.get(entity) {
+            if let Ok((mut bounding_vol, transform, handle)) = bound_vol_query.get_mut(entity) {
+                let mesh = meshes
+                    .get(handle)
+                    .expect("Bounding volume had bad mesh handle");
+                bounding_vol.update_on_transform_change(mesh, transform);
+            }
         }
     }
 }

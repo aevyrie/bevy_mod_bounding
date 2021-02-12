@@ -1,4 +1,4 @@
-use crate::{BoundingVolumeDebug, BoundingVolume};
+use crate::{BoundingVolume, BoundingVolumeDebug};
 use bevy::prelude::*;
 
 /// Marks the debug bounding volume mesh of a BoundingVolumeDebug entity
