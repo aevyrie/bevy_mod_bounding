@@ -8,6 +8,7 @@ use debug::update_debug_meshes;
 use std::marker::PhantomData;
 
 pub use aabb::AxisAlignedBB;
+pub use debug::BoundingVolumeDebug;
 pub use obb::OrientedBB;
 pub use sphere::BSphere;
 
@@ -16,6 +17,7 @@ pub struct BoundingVolumePlugin<T: BoundingVolume> {
     marker: std::marker::PhantomData<T>,
 }
 
+/// A plugin that provides functionality for generating and updating bounding volumes for meshes.
 impl<T: 'static + Send + Sync + BoundingVolume> Plugin for BoundingVolumePlugin<T> {
     fn build(&self, app: &mut AppBuilder) {
         app.add_system_to_stage(PRE_UPDATE, spawn::<T>.system())
@@ -23,7 +25,7 @@ impl<T: 'static + Send + Sync + BoundingVolume> Plugin for BoundingVolumePlugin<
                 POST_UPDATE,
                 update::<T>
                     .system()
-                    .after(bevy::transform::TRANSFORM_PROPAGATION)
+                    .after("transform_propagate_system")
                     .label(format!("update_boundvols_{}", std::any::type_name::<T>())),
             )
             .add_system_to_stage(
@@ -49,8 +51,6 @@ impl<T: BoundingVolume + Send + Sync> Default for AddBoundingVolume<T> {
     }
 }
 
-pub struct BoundingVolumeDebug;
-
 /// A [BoundingVolume] stores its properties in mesh space to maximize precision. Because some types
 /// of bounding volume must be recomputed if the mesh is scaled or rotated, this trait calls an
 /// update function depending on whether the mesh or transform has updated.
@@ -64,7 +64,9 @@ pub trait BoundingVolume {
     fn update_on_transform_change(&mut self, mesh: &Mesh, transform: &GlobalTransform);
 }
 
-/// Use generics to spawn a child entity with component type T
+/// Spawns a new [BoundingVolume], replacing the [AddBoundingVolume] marker component on the
+/// entity. This new BoundingVolume is fully initialized and will be kept up to date with the
+/// `update()` system.
 pub fn spawn<T: 'static + BoundingVolume + Send + Sync>(
     commands: &mut Commands,
     meshes: Res<Assets<Mesh>>,
@@ -79,6 +81,9 @@ pub fn spawn<T: 'static + BoundingVolume + Send + Sync>(
     }
 }
 
+/// Updates [BoundingVolume]s when their meshes or [GlobalTransform]s are changed. If an entity's
+/// mesh has changed, triggering a bounding volume update, the update function will won't update it
+/// a second time if the transform has also changed.
 fn update<T: 'static + BoundingVolume + Send + Sync>(
     meshes: Res<Assets<Mesh>>,
     changed_mesh_query: Query<Entity, Changed<Handle<Mesh>>>,
