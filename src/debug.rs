@@ -1,10 +1,13 @@
-use crate::{BoundingVolume, BoundingVolumeDebug};
+use crate::BoundingVolume;
 use bevy::prelude::*;
 
-/// Marks the debug bounding volume mesh of a BoundingVolumeDebug entity
+/// Marks an entity that should have a mesh added as a child to represent the mesh's bounding volume.
+pub struct BoundingVolumeDebug;
+
+/// Marks the debug bounding volume mesh, which exists as a child of a [BoundingVolumeDebug] entity
 pub struct BoundingVolumeDebugMesh;
 
-/// Updates existing debug meshes and creates new debug meshes on entities with a bounding volume
+/// Updates existing debug meshes, and creates new debug meshes on entities with a bounding volume
 /// component marked with [BoundingVolumeDebug] and no existing debug mesh.
 pub fn update_debug_meshes<T: 'static + BoundingVolume + Send + Sync>(
     commands: &mut Commands,

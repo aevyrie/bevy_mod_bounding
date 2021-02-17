@@ -26,7 +26,7 @@ pub struct OrientedBB {
     ///
     /// ## Note
     /// This is *not* the orientation of the bounding box! You probably want the conjugate of
-    /// this quaternion.
+    /// this quaternion if that's what you need.
     orientation: Quat,
 }
 
@@ -54,7 +54,7 @@ impl OrientedBB {
     /// This comes with a tradeoff - because we are finding the AABB of the OBB, the bounding box
     /// will be more conservative, and will be larger than the AABB of the mesh itself.
     pub fn outer_aabb(&self) -> AxisAlignedBB {
-        let axis_aligned_vertices = self.aabb.vertices();
+        let axis_aligned_vertices = self.aabb.vertices_mesh_space();
         let oriented_vertices = axis_aligned_vertices
             .iter()
             .map(|vertex| self.orientation.mul_vec3(*vertex))
