@@ -135,4 +135,19 @@ impl BoundingVolume for AxisAlignedBB {
     fn update_on_transform_change(&mut self, mesh: &Mesh, transform: &GlobalTransform) {
         *self = Self::new(mesh, transform)
     }
+
+    fn outside_plane(
+        &self,
+        bound_vol_position: &GlobalTransform,
+        point: Vec3,
+        normal: Vec3,
+    ) -> bool {
+        for vertex in self.vertices(*bound_vol_position).iter() {
+            if normal.dot(*vertex) + -normal.dot(point) < 0.0 {
+                // if any point is on the inside of the plane, we can end early.
+                return false;
+            }
+        }
+        return true;
+    }
 }

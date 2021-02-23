@@ -18,7 +18,7 @@ pub struct BSphere {
 impl BSphere {
     /// Given the current [GlobalTransform] of the bounded mesh, returns the central origin of the
     /// sphere that bounds the mesh in world space.
-    pub fn origin(&self, transform: &GlobalTransform) -> Vec3 {
+    pub fn origin(&self, transform: GlobalTransform) -> Vec3 {
         self.mesh_space_origin + transform.translation
     }
     /// Given the current [GlobalTransform] of the bounded mesh, returns the radius of the sphere
@@ -124,5 +124,16 @@ impl BoundingVolume for BSphere {
 
     fn update_on_transform_change(&mut self, _mesh: &Mesh, _transform: &GlobalTransform) {
         // No-op
+    }
+
+    fn outside_plane(
+        &self,
+        bound_vol_position: &GlobalTransform,
+        point: Vec3,
+        normal: Vec3,
+    ) -> bool {
+        normal.dot(self.origin(*bound_vol_position)) + -normal.dot(point)
+            - self.radius(bound_vol_position)
+            > 0.0
     }
 }

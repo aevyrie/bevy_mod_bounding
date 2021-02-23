@@ -3,8 +3,10 @@ mod debug;
 mod obb;
 mod sphere;
 
-use bevy::prelude::{stage::*, *};
+use bevy::prelude::*;
 use debug::update_debug_meshes;
+use std::fmt::Debug;
+use std::hash::Hash;
 use std::marker::PhantomData;
 
 pub use aabb::AxisAlignedBB;
@@ -12,27 +14,42 @@ pub use debug::BoundingVolumeDebug;
 pub use obb::OrientedBB;
 pub use sphere::BSphere;
 
+/// System labels for the bounding plugin systems.
+#[derive(Debug, Hash, PartialEq, Eq, Clone, SystemLabel)]
+pub enum BoundingSystem<T>
+where
+    PhantomData<T>: 'static + Clone + Hash + Debug + Eq + Send + Sync + BoundingVolume,
+{
+    UpdateBoundVols(PhantomData<T>),
+    UpdateDebugMeshes(PhantomData<T>),
+}
+
 #[derive(Default)]
 pub struct BoundingVolumePlugin<T: BoundingVolume> {
     marker: std::marker::PhantomData<T>,
 }
 
 /// A plugin that provides functionality for generating and updating bounding volumes for meshes.
-impl<T: 'static + Send + Sync + BoundingVolume> Plugin for BoundingVolumePlugin<T> {
+impl<T> Plugin for BoundingVolumePlugin<T>
+where
+    T: 'static + Clone + Hash + Debug + Eq + Send + Sync + BoundingVolume,
+{
     fn build(&self, app: &mut AppBuilder) {
-        app.add_system_to_stage(PRE_UPDATE, spawn::<T>.system())
+        app.add_system_to_stage(CoreStage::PreUpdate, spawn::<T>.system())
             .add_system_to_stage(
-                POST_UPDATE,
+                CoreStage::PostUpdate,
                 update::<T>
                     .system()
                     .after("transform_propagate_system")
-                    .label(format!("update_boundvols_{}", std::any::type_name::<T>())),
+                    .label(BoundingSystem::UpdateBoundVols(PhantomData::<T>::default())),
             )
             .add_system_to_stage(
-                POST_UPDATE,
+                CoreStage::PostUpdate,
                 update_debug_meshes::<T>
                     .system()
-                    .after(format!("update_boundvols_{}", std::any::type_name::<T>())),
+                    .after(BoundingSystem::UpdateDebugMeshes(
+                        PhantomData::<T>::default(),
+                    )),
             );
     }
 }
@@ -62,6 +79,14 @@ pub trait BoundingVolume {
     /// This function is only called when only the entity's [GlobalTransform] has changed. Only
     /// some types of bounding volume need to be recomputed in this case.
     fn update_on_transform_change(&mut self, mesh: &Mesh, transform: &GlobalTransform);
+    /// Returns true iff the bounding mesh is entirely on the outside of the supplied plane.
+    /// "Outside" is the direction that the plane normal points to.
+    fn outside_plane(
+        &self,
+        bound_vol_position: &GlobalTransform,
+        point: Vec3,
+        normal: Vec3,
+    ) -> bool;
 }
 
 /// Spawns a new [BoundingVolume], replacing the [AddBoundingVolume] marker component on the

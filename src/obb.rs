@@ -27,10 +27,26 @@ pub struct OrientedBB {
     /// ## Note
     /// This is *not* the orientation of the bounding box! You probably want the conjugate of
     /// this quaternion if that's what you need.
-    orientation: Quat,
+    mesh_orientation: Quat,
 }
 
 impl OrientedBB {
+    /// Returns an array of the 8 vertices of the bounding box in world space.
+    pub fn vertices(&self, transform: GlobalTransform) -> [Vec3; 8] {
+        let orient = Mat4::from_quat(self.orientation());
+        let transform = orient * transform.compute_matrix();
+        let vertices = self.aabb.vertices(GlobalTransform::identity());
+        [
+            transform.transform_point3(vertices[0]),
+            transform.transform_point3(vertices[1]),
+            transform.transform_point3(vertices[2]),
+            transform.transform_point3(vertices[3]),
+            transform.transform_point3(vertices[4]),
+            transform.transform_point3(vertices[5]),
+            transform.transform_point3(vertices[6]),
+            transform.transform_point3(vertices[7]),
+        ]
+    }
     /// Returns the [AxisAlignedBB] of this [OrientedBB] in ***mesh space***.
     pub fn mesh_aabb(&self) -> &AxisAlignedBB {
         &self.aabb
@@ -41,7 +57,7 @@ impl OrientedBB {
     /// This orientation tells you how to rotate the [AxisAlignedBB] that defines the [OrientedBB]
     /// so that the bounding box matches its [Mesh]s orientation.
     pub fn orientation(&self) -> Quat {
-        self.orientation.conjugate()
+        self.mesh_orientation.conjugate()
     }
     /// Returns an [AxisAlignedBB] that contains this [OrientedBB]. In other words, this returns
     /// the AABB of this OBB.
@@ -57,7 +73,7 @@ impl OrientedBB {
         let axis_aligned_vertices = self.aabb.vertices_mesh_space();
         let oriented_vertices = axis_aligned_vertices
             .iter()
-            .map(|vertex| self.orientation.mul_vec3(*vertex))
+            .map(|vertex| self.orientation().mul_vec3(*vertex))
             .collect();
         AxisAlignedBB::compute_aabb(&oriented_vertices)
     }
@@ -73,7 +89,7 @@ impl OrientedBB {
         }
         OrientedBB {
             aabb: AxisAlignedBB::from_extents(minimums, maximums),
-            orientation,
+            mesh_orientation: orientation,
         }
     }
 }
@@ -129,7 +145,7 @@ impl BoundingVolume for OrientedBB {
             min_y: self.mesh_aabb().minimums().y,
             min_z: self.mesh_aabb().minimums().z,
         });
-        let transform = Mat4::from_quat(self.orientation).inverse();
+        let transform = Mat4::from_quat(self.mesh_orientation).inverse();
         match mesh.attribute_mut(Mesh::ATTRIBUTE_POSITION) {
             None => panic!("Mesh does not contain vertex positions"),
             Some(vertex_values) => match vertex_values {
@@ -149,5 +165,20 @@ impl BoundingVolume for OrientedBB {
 
     fn update_on_transform_change(&mut self, _mesh: &Mesh, _transform: &GlobalTransform) {
         // No-op
+    }
+
+    fn outside_plane(
+        &self,
+        bound_vol_position: &GlobalTransform,
+        point: Vec3,
+        normal: Vec3,
+    ) -> bool {
+        for vertex in self.vertices(*bound_vol_position).iter() {
+            if normal.dot(*vertex) + -normal.dot(point) < 0.0 {
+                // if any point is on the inside of the plane, we can end early.
+                return false;
+            }
+        }
+        return true;
     }
 }
