@@ -3,26 +3,15 @@ mod debug;
 mod obb;
 mod sphere;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, transform::TransformSystem};
 use debug::update_debug_meshes;
-use std::fmt::Debug;
-use std::hash::Hash;
 use std::marker::PhantomData;
+use std::{borrow::Cow, fmt::Debug};
 
 pub use aabb::AxisAlignedBB;
 pub use debug::BoundingVolumeDebug;
 pub use obb::OrientedBB;
 pub use sphere::BSphere;
-
-/// System labels for the bounding plugin systems.
-#[derive(Debug, Hash, PartialEq, Eq, Clone, SystemLabel)]
-pub enum BoundingSystem<T>
-where
-    PhantomData<T>: 'static + Clone + Hash + Debug + Eq + Send + Sync + BoundingVolume,
-{
-    UpdateBoundVols(PhantomData<T>),
-    UpdateDebugMeshes(PhantomData<T>),
-}
 
 #[derive(Default)]
 pub struct BoundingVolumePlugin<T: BoundingVolume> {
@@ -32,7 +21,7 @@ pub struct BoundingVolumePlugin<T: BoundingVolume> {
 /// A plugin that provides functionality for generating and updating bounding volumes for meshes.
 impl<T> Plugin for BoundingVolumePlugin<T>
 where
-    T: 'static + Clone + Hash + Debug + Eq + Send + Sync + BoundingVolume,
+    T: 'static + Send + Sync + BoundingVolume,
 {
     fn build(&self, app: &mut AppBuilder) {
         app.add_system_to_stage(CoreStage::PreUpdate, spawn::<T>.system())
@@ -40,16 +29,18 @@ where
                 CoreStage::PostUpdate,
                 update::<T>
                     .system()
-                    .after("transform_propagate_system")
-                    .label(BoundingSystem::UpdateBoundVols(PhantomData::<T>::default())),
+                    .after(TransformSystem::TransformPropagate)
+                    .label(Cow::Owned(format!(
+                        "update_boundvols_{}",
+                        std::any::type_name::<T>()
+                    ))),
             )
             .add_system_to_stage(
                 CoreStage::PostUpdate,
-                update_debug_meshes::<T>
-                    .system()
-                    .after(BoundingSystem::UpdateDebugMeshes(
-                        PhantomData::<T>::default(),
-                    )),
+                update_debug_meshes::<T>.system().after(Cow::Owned(format!(
+                    "update_boundvols_{}",
+                    std::any::type_name::<T>()
+                ))),
             );
     }
 }
