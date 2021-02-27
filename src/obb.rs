@@ -34,7 +34,7 @@ impl OrientedBB {
     /// Returns an array of the 8 vertices of the bounding box in world space.
     pub fn vertices(&self, transform: GlobalTransform) -> [Vec3; 8] {
         let orient = Mat4::from_quat(self.orientation());
-        let transform = orient * transform.compute_matrix();
+        let transform = transform.compute_matrix() * orient;
         let transform = GlobalTransform::from_matrix(transform);
         self.aabb.vertices(transform)
     }
