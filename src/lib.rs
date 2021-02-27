@@ -9,7 +9,7 @@ use std::marker::PhantomData;
 use std::{borrow::Cow, fmt::Debug};
 
 pub use aabb::AxisAlignedBB;
-pub use debug::BoundingVolumeDebug;
+pub use debug::DebugBounds;
 pub use obb::OrientedBB;
 pub use sphere::BSphere;
 
@@ -21,7 +21,8 @@ pub struct BoundingVolumePlugin<T: BoundingVolume> {
 /// A plugin that provides functionality for generating and updating bounding volumes for meshes.
 impl<T> Plugin for BoundingVolumePlugin<T>
 where
-    T: 'static + Send + Sync + BoundingVolume,
+    T: 'static + Send + Sync + BoundingVolume + Clone,
+    Mesh: From<&'static T>,
 {
     fn build(&self, app: &mut AppBuilder) {
         app.add_system_to_stage(CoreStage::PreUpdate, spawn::<T>.system())
@@ -51,11 +52,11 @@ where
 /// components are always valid when queried, and at worst case can only be out of date if queried
 /// in a frame before the bounding volume update system is run.
 #[derive(Debug, Clone)]
-pub struct AddBoundingVolume<T: BoundingVolume + Send + Sync>(PhantomData<T>);
+pub struct Bounded<T: BoundingVolume + Send + Sync>(PhantomData<T>);
 
-impl<T: BoundingVolume + Send + Sync> Default for AddBoundingVolume<T> {
+impl<T: BoundingVolume + Send + Sync> Default for Bounded<T> {
     fn default() -> Self {
-        AddBoundingVolume(PhantomData::default())
+        Bounded(PhantomData::default())
     }
 }
 
@@ -86,13 +87,13 @@ pub trait BoundingVolume {
 pub fn spawn<T: 'static + BoundingVolume + Send + Sync>(
     commands: &mut Commands,
     meshes: Res<Assets<Mesh>>,
-    query: Query<(&Handle<Mesh>, &GlobalTransform, Entity), With<AddBoundingVolume<T>>>,
+    query: Query<(&Handle<Mesh>, &GlobalTransform, Entity), With<Bounded<T>>>,
 ) {
     for (handle, transform, entity) in query.iter() {
         if let Some(mesh) = meshes.get(handle) {
             commands.set_current_entity(entity);
             commands.with(T::new(mesh, transform));
-            commands.remove_one::<AddBoundingVolume<T>>(entity);
+            commands.remove_one::<Bounded<T>>(entity);
         }
     }
 }

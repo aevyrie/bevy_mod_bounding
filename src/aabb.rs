@@ -34,27 +34,37 @@ impl AxisAlignedBB {
     }
     /// Returns the vertices of the bounding box in world space, given the current mesh transform.
     pub fn vertices(&self, transform: GlobalTransform) -> [Vec3; 8] {
+        let vertices_mesh_space = self.vertices_mesh_space();
         [
-            transform.translation + Vec3::new(self.maximums.x, self.maximums.y, self.maximums.z),
-            transform.translation + Vec3::new(self.maximums.x, self.maximums.y, self.minimums.z),
-            transform.translation + Vec3::new(self.maximums.x, self.minimums.y, self.maximums.z),
-            transform.translation + Vec3::new(self.maximums.x, self.minimums.y, self.minimums.z),
-            transform.translation + Vec3::new(self.minimums.x, self.maximums.y, self.maximums.z),
-            transform.translation + Vec3::new(self.minimums.x, self.maximums.y, self.minimums.z),
-            transform.translation + Vec3::new(self.minimums.x, self.minimums.y, self.maximums.z),
-            transform.translation + Vec3::new(self.minimums.x, self.minimums.y, self.minimums.z),
+            transform.translation + vertices_mesh_space[0],
+            transform.translation + vertices_mesh_space[1],
+            transform.translation + vertices_mesh_space[2],
+            transform.translation + vertices_mesh_space[3],
+            transform.translation + vertices_mesh_space[4],
+            transform.translation + vertices_mesh_space[5],
+            transform.translation + vertices_mesh_space[6],
+            transform.translation + vertices_mesh_space[7],
         ]
     }
     pub fn vertices_mesh_space(&self) -> [Vec3; 8] {
+        /*
+              (2)-----(3)               Y
+               | \     | \              |
+               |  (1)-----(0) MAX       o---X
+               |   |   |   |             \
+          MIN (6)--|--(7)  |              Z
+                 \ |     \ |
+                  (5)-----(4)
+        */
         [
             Vec3::new(self.maximums.x, self.maximums.y, self.maximums.z),
-            Vec3::new(self.maximums.x, self.maximums.y, self.minimums.z),
-            Vec3::new(self.maximums.x, self.minimums.y, self.maximums.z),
-            Vec3::new(self.maximums.x, self.minimums.y, self.minimums.z),
             Vec3::new(self.minimums.x, self.maximums.y, self.maximums.z),
             Vec3::new(self.minimums.x, self.maximums.y, self.minimums.z),
+            Vec3::new(self.maximums.x, self.maximums.y, self.minimums.z),
+            Vec3::new(self.maximums.x, self.minimums.y, self.maximums.z),
             Vec3::new(self.minimums.x, self.minimums.y, self.maximums.z),
             Vec3::new(self.minimums.x, self.minimums.y, self.minimums.z),
+            Vec3::new(self.maximums.x, self.minimums.y, self.minimums.z),
         ]
     }
     pub fn from_extents(minimums: Vec3, maximums: Vec3) -> Self {
@@ -99,14 +109,7 @@ impl BoundingVolume for AxisAlignedBB {
     }
 
     fn new_debug_mesh(&self, transform: &GlobalTransform) -> Mesh {
-        let mut mesh = Mesh::from(shape::Box {
-            max_x: self.maximums.x,
-            max_y: self.maximums.y,
-            max_z: self.maximums.z,
-            min_x: self.minimums.x,
-            min_y: self.minimums.y,
-            min_z: self.minimums.z,
-        });
+        let mut mesh = Mesh::from(self);
         let inverse_transform = Transform::from_matrix(
             Mat4::from_scale_rotation_translation(
                 transform.scale,

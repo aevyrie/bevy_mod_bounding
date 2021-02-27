@@ -8,7 +8,7 @@ use bevy_mod_bounding::*;
 fn main() {
     App::build()
         .add_plugins(DefaultPlugins)
-        .add_plugin(BoundingVolumePlugin::<BSphere>::default())
+        //.add_plugin(BoundingVolumePlugin::<BSphere>::default())
         .add_plugin(BoundingVolumePlugin::<AxisAlignedBB>::default())
         .add_plugin(BoundingVolumePlugin::<OrientedBB>::default())
         .add_startup_system(setup.system())
@@ -37,38 +37,24 @@ fn setup(
         .spawn(PbrBundle {
             mesh: asset_server.get_handle(mesh_path),
             material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
-            transform: Transform::from_translation(Vec3::new(-1.5, 0.0, 0.0)),
+            transform: Transform::from_translation(Vec3::new(-1.0, 0.0, 0.0)),
             ..Default::default()
         })
-        .with(AddBoundingVolume::<BSphere>::default())
-        .with(BoundingVolumeDebug)
+        .with(Bounded::<AxisAlignedBB>::default())
+        .with(DebugBounds)
         .with(Rotator)
+        .with(Mesh::from(Mesh::from(shape::Icosphere {
+            radius: 5.0,
+            ..Default::default()
+        })))
         .spawn(PbrBundle {
             mesh: asset_server.get_handle(mesh_path),
             material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
-            transform: Transform::from_translation(Vec3::new(-0.5, 0.0, 0.0)),
+            transform: Transform::from_translation(Vec3::new(1.0, 0.0, 0.0)),
             ..Default::default()
         })
-        .with(AddBoundingVolume::<AxisAlignedBB>::default())
-        .with(BoundingVolumeDebug)
-        .with(Rotator)
-        .spawn(PbrBundle {
-            mesh: asset_server.get_handle(mesh_path),
-            material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
-            transform: Transform::from_translation(Vec3::new(0.5, 0.0, 0.0)),
-            ..Default::default()
-        })
-        .with(AddBoundingVolume::<OrientedBB>::default())
-        .with(BoundingVolumeDebug)
-        .with(Rotator)
-        .spawn(PbrBundle {
-            mesh: asset_server.get_handle(mesh_path),
-            material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
-            transform: Transform::from_translation(Vec3::new(1.5, 0.0, 0.0)),
-            ..Default::default()
-        })
-        //.with(BoundingVolume::<BoundingSphere>::default())
-        //.with(BoundingVolumeDebug)
+        .with(Bounded::<OrientedBB>::default())
+        .with(DebugBounds)
         .with(Rotator)
         .spawn(LightBundle {
             transform: Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),
@@ -79,11 +65,11 @@ fn setup(
 fn rotation_system(time: Res<Time>, mut query: Query<&mut Transform, With<Rotator>>) {
     for mut transform in query.iter_mut() {
         let scale = Transform::from_scale(
-            Vec3::one() * ((time.seconds_since_startup() as f32 / 2.0).sin() * 0.004) + Vec3::one(),
+            Vec3::one() * ((time.seconds_since_startup() as f32 / 2.0).sin() * 0.01) + Vec3::one(),
         );
-        let rot_x = Quat::from_rotation_x((time.seconds_since_startup() as f32 / 5.0).sin() / 10.0);
-        let rot_y = Quat::from_rotation_y((time.seconds_since_startup() as f32 / 3.0).sin() / 10.0);
-        let rot_z = Quat::from_rotation_z((time.seconds_since_startup() as f32 / 4.0).sin() / 10.0);
+        let rot_x = Quat::from_rotation_x((time.seconds_since_startup() as f32 / 5.0).sin() / 20.0);
+        let rot_y = Quat::from_rotation_y((time.seconds_since_startup() as f32 / 3.0).sin() / 20.0);
+        let rot_z = Quat::from_rotation_z((time.seconds_since_startup() as f32 / 4.0).sin() / 20.0);
         *transform = *transform * scale * Transform::from_rotation(rot_x * rot_y * rot_z);
     }
 }

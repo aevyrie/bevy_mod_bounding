@@ -35,17 +35,13 @@ impl OrientedBB {
     pub fn vertices(&self, transform: GlobalTransform) -> [Vec3; 8] {
         let orient = Mat4::from_quat(self.orientation());
         let transform = orient * transform.compute_matrix();
-        let vertices = self.aabb.vertices(GlobalTransform::identity());
-        [
-            transform.transform_point3(vertices[0]),
-            transform.transform_point3(vertices[1]),
-            transform.transform_point3(vertices[2]),
-            transform.transform_point3(vertices[3]),
-            transform.transform_point3(vertices[4]),
-            transform.transform_point3(vertices[5]),
-            transform.transform_point3(vertices[6]),
-            transform.transform_point3(vertices[7]),
-        ]
+        let transform = GlobalTransform::from_matrix(transform);
+        self.aabb.vertices(transform)
+    }
+    pub fn vertices_mesh_space(&self) -> [Vec3; 8] {
+        let orient = Mat4::from_quat(self.orientation());
+        let transform = GlobalTransform::from_matrix(orient);
+        self.aabb.vertices(transform)
     }
     /// Returns the [AxisAlignedBB] of this [OrientedBB] in ***mesh space***.
     pub fn mesh_aabb(&self) -> &AxisAlignedBB {
@@ -137,30 +133,7 @@ impl BoundingVolume for OrientedBB {
     }
 
     fn new_debug_mesh(&self, _transform: &GlobalTransform) -> Mesh {
-        let mut mesh = Mesh::from(shape::Box {
-            max_x: self.mesh_aabb().maximums().x,
-            max_y: self.mesh_aabb().maximums().y,
-            max_z: self.mesh_aabb().maximums().z,
-            min_x: self.mesh_aabb().minimums().x,
-            min_y: self.mesh_aabb().minimums().y,
-            min_z: self.mesh_aabb().minimums().z,
-        });
-        let transform = Mat4::from_quat(self.mesh_orientation).inverse();
-        match mesh.attribute_mut(Mesh::ATTRIBUTE_POSITION) {
-            None => panic!("Mesh does not contain vertex positions"),
-            Some(vertex_values) => match vertex_values {
-                VertexAttributeValues::Float3(ref mut positions) => {
-                    *positions = positions
-                        .iter()
-                        .map(|coordinates| {
-                            transform.transform_point3(Vec3::from(*coordinates)).into()
-                        })
-                        .collect()
-                }
-                _ => panic!("Unexpected vertex types in ATTRIBUTE_POSITION"),
-            },
-        };
-        mesh
+        Mesh::from(self)
     }
 
     fn update_on_transform_change(&mut self, _mesh: &Mesh, _transform: &GlobalTransform) {
