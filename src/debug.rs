@@ -57,6 +57,21 @@ pub fn update_debug_meshes<T>(
     }
 }
 
+pub fn update_debug_mesh_visibility<T>(
+    query: Query<(&Children, &Visible), (With<DebugBounds>, With<T>, Changed<Visible>)>,
+    mut child_query: Query<&mut Visible, With<DebugBoundsMesh>>,
+) where
+    T: 'static + BoundingVolume + Clone + Send + Sync,
+{
+    for (children, parent_visible) in query.iter() {
+        for child in children.iter() {
+            if let Ok(mut child_visible) = child_query.get_mut(*child) {
+                child_visible.is_visible = parent_visible.is_visible;
+            }
+        }
+    }
+}
+
 impl From<&AxisAlignedBB> for Mesh {
     fn from(aabb: &AxisAlignedBB) -> Self {
         /*

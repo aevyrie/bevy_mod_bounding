@@ -4,7 +4,7 @@ mod obb;
 mod sphere;
 
 use bevy::{prelude::*, transform::TransformSystem};
-use debug::update_debug_meshes;
+use debug::{update_debug_mesh_visibility, update_debug_meshes};
 use std::marker::PhantomData;
 use std::{borrow::Cow, fmt::Debug};
 
@@ -38,10 +38,25 @@ where
             )
             .add_system_to_stage(
                 CoreStage::PostUpdate,
-                update_debug_meshes::<T>.system().after(Cow::Owned(format!(
-                    "update_boundvols_{}",
-                    std::any::type_name::<T>()
-                ))),
+                update_debug_meshes::<T>
+                    .system()
+                    .after(Cow::Owned(format!(
+                        "update_boundvols_{}",
+                        std::any::type_name::<T>()
+                    )))
+                    .label(Cow::Owned(format!(
+                        "update_debugboundvols_{}",
+                        std::any::type_name::<T>()
+                    ))),
+            )
+            .add_system_to_stage(
+                CoreStage::PostUpdate,
+                update_debug_mesh_visibility::<T>
+                    .system()
+                    .after(Cow::Owned(format!(
+                        "update_debugboundvols_{}",
+                        std::any::type_name::<T>()
+                    ))),
             );
     }
 }
