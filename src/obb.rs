@@ -43,6 +43,12 @@ impl OrientedBB {
         let transform = GlobalTransform::from_matrix(orient);
         self.aabb.vertices(transform)
     }
+    pub fn from_aabb_orientation(aabb: AxisAlignedBB, mesh_orientation: Quat) -> OrientedBB {
+        OrientedBB {
+            aabb,
+            mesh_orientation,
+        }
+    }
     /// Returns the [AxisAlignedBB] of this [OrientedBB] in ***mesh space***.
     pub fn mesh_aabb(&self) -> &AxisAlignedBB {
         &self.aabb
@@ -135,6 +141,7 @@ impl BoundingVolume for OrientedBB {
                 obb = temp_obb;
             }
         }
+        warn!("New OBB generated: {:?}", obb);
         obb
     }
 
