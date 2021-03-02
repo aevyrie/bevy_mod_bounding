@@ -135,8 +135,8 @@ impl BoundingVolume for AxisAlignedBB {
         mesh
     }
 
-    fn update_on_transform_change(&mut self, mesh: &Mesh, transform: &GlobalTransform) {
-        *self = Self::new(mesh, transform)
+    fn update_on_transform_change(&self, mesh: &Mesh, transform: &GlobalTransform) -> Option<Self> {
+        Some(Self::new(mesh, transform))
     }
 
     fn outside_plane(

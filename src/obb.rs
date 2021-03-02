@@ -142,8 +142,13 @@ impl BoundingVolume for OrientedBB {
         Mesh::from(self)
     }
 
-    fn update_on_transform_change(&mut self, _mesh: &Mesh, _transform: &GlobalTransform) {
+    fn update_on_transform_change(
+        &self,
+        _mesh: &Mesh,
+        _transform: &GlobalTransform,
+    ) -> Option<Self> {
         // No-op
+        None
     }
 
     fn outside_plane(

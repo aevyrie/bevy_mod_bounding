@@ -16,7 +16,7 @@ pub struct BoundingVolumePlugin<T: BoundingVolume> {
 /// A plugin that provides functionality for generating and updating bounding volumes for meshes.
 impl<T> Plugin for BoundingVolumePlugin<T>
 where
-    T: 'static + Send + Sync + BoundingVolume + Clone,
+    T: 'static + Send + Sync + BoundingVolume + Clone + Debug,
     Mesh: From<&'static T>,
 {
     fn build(&self, app: &mut AppBuilder) {
@@ -80,7 +80,13 @@ pub trait BoundingVolume {
     fn new_debug_mesh(&self, transform: &GlobalTransform) -> Mesh;
     /// This function is only called when only the entity's [GlobalTransform] has changed. Only
     /// some types of bounding volume need to be recomputed in this case.
-    fn update_on_transform_change(&mut self, mesh: &Mesh, transform: &GlobalTransform);
+    fn update_on_transform_change(
+        &self,
+        _mesh: &Mesh,
+        _transform: &GlobalTransform,
+    ) -> Option<Self>
+    where
+        Self: Sized;
     /// Returns true iff the bounding mesh is entirely on the outside of the supplied plane.
     /// "Outside" is the direction that the plane normal points to.
     fn outside_plane(
@@ -132,7 +138,9 @@ fn update<T: 'static + BoundingVolume + Send + Sync>(
                 let mesh = meshes
                     .get(handle)
                     .expect("Bounding volume had bad mesh handle");
-                bounding_vol.update_on_transform_change(mesh, transform);
+                if let Some(bound_vol) = bounding_vol.update_on_transform_change(mesh, transform) {
+                    *bounding_vol = bound_vol;
+                }
             }
         }
     }

@@ -122,8 +122,12 @@ impl BoundingVolume for BSphere {
         mesh
     }
 
-    fn update_on_transform_change(&mut self, _mesh: &Mesh, _transform: &GlobalTransform) {
-        // No-op
+    fn update_on_transform_change(
+        &self,
+        _mesh: &Mesh,
+        _transform: &GlobalTransform,
+    ) -> Option<Self> {
+        None
     }
 
     fn outside_plane(

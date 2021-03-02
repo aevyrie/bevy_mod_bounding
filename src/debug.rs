@@ -22,7 +22,7 @@ pub fn update_debug_meshes<T>(
     >,
     mut debug_mesh_query: Query<&mut Handle<Mesh>, With<DebugBoundsMesh>>,
 ) where
-    T: 'static + BoundingVolume + Clone + Send + Sync,
+    T: 'static + BoundingVolume + Clone + Send + Sync + std::fmt::Debug,
     Mesh: From<&'static T>,
 {
     for (transform, bound_vol, entity, optional_children) in query.iter() {
@@ -33,6 +33,7 @@ pub fn update_debug_meshes<T>(
                     let new_handle = meshes.add(bound_vol.new_debug_mesh(transform));
                     *mesh_handle = new_handle;
                     updated_existing_child = true;
+                    break;
                 }
             }
         }
