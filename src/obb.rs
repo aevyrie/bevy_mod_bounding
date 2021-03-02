@@ -109,27 +109,33 @@ impl BoundingVolume for OrientedBB {
 
         let mut orientation = Quat::identity();
         let mut volume = f32::MAX;
-        for step in 0..3 {
-            // Rotate about y-axis  (turntable) until the smallest volume box is found
-            let orientation_temp = orientation;
-            for angle in (0..90).step_by(5) {
-                let new_orientation = orientation_temp
-                    * match step {
-                        0 => Quat::from_rotation_x(angle as f32 * 2.0 * PI / 360.0),
-                        1 => Quat::from_rotation_y(angle as f32 * 2.0 * PI / 360.0),
-                        2 => Quat::from_rotation_z(angle as f32 * 2.0 * PI / 360.0),
-                        _ => panic!("Unreachable match arm reached!"),
-                    };
-                let obb = OrientedBB::compute_obb(&vertices, new_orientation);
-                let diff = obb.mesh_aabb().maximums() - obb.mesh_aabb().minimums();
-                let new_volume = diff.x * diff.y * diff.z;
-                if new_volume < volume {
-                    volume = new_volume;
-                    orientation = new_orientation;
-                }
+        // Rotate about y-axis  (turntable) until the smallest volume box is found
+        let orientation_temp = orientation;
+        for angle in (0..45).step_by(15) {
+            let new_orientation =
+                orientation_temp * Quat::from_rotation_y(angle as f32 * 2.0 * PI / 360.0);
+            let temp_obb = OrientedBB::compute_obb(&vertices, new_orientation);
+            let diff = temp_obb.mesh_aabb().maximums() - temp_obb.mesh_aabb().minimums();
+            let new_volume = diff.x * diff.y * diff.z;
+            if new_volume < volume {
+                volume = new_volume;
+                orientation = new_orientation;
             }
         }
-        OrientedBB::compute_obb(&vertices, orientation)
+        let mut obb = OrientedBB::compute_obb(&vertices, orientation);
+        let orientation_temp = orientation;
+        for angle in (0..90).step_by(15) {
+            let new_orientation =
+                orientation_temp * Quat::from_rotation_x(angle as f32 * 2.0 * PI / 360.0);
+            let temp_obb = OrientedBB::compute_obb(&vertices, new_orientation);
+            let diff = temp_obb.mesh_aabb().maximums() - temp_obb.mesh_aabb().minimums();
+            let new_volume = diff.x * diff.y * diff.z;
+            if new_volume < volume {
+                volume = new_volume;
+                obb = temp_obb;
+            }
+        }
+        obb
     }
 
     fn new_debug_mesh(&self, _transform: &GlobalTransform) -> Mesh {
