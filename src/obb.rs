@@ -141,7 +141,6 @@ impl BoundingVolume for OrientedBB {
                 obb = temp_obb;
             }
         }
-        warn!("New OBB generated: {:?}", obb);
         obb
     }
 

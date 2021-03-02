@@ -100,7 +100,7 @@ pub trait BoundingVolume {
 /// Spawns a new [BoundingVolume], replacing the [AddBoundingVolume] marker component on the
 /// entity. This new BoundingVolume is fully initialized and will be kept up to date with the
 /// `update()` system.
-pub fn spawn<T: 'static + BoundingVolume + Send + Sync>(
+pub fn spawn<T: 'static + BoundingVolume + Send + Sync + Debug>(
     commands: &mut Commands,
     meshes: Res<Assets<Mesh>>,
     query: Query<(&Handle<Mesh>, &GlobalTransform, Entity), With<Bounded<T>>>,
@@ -108,7 +108,13 @@ pub fn spawn<T: 'static + BoundingVolume + Send + Sync>(
     for (handle, transform, entity) in query.iter() {
         if let Some(mesh) = meshes.get(handle) {
             commands.set_current_entity(entity);
-            commands.with(T::new(mesh, transform));
+            let new_bound = T::new(mesh, transform);
+            warn!(
+                "New {} generated: {:?}",
+                std::any::type_name::<T>(),
+                new_bound
+            );
+            commands.with(new_bound);
             commands.remove_one::<Bounded<T>>(entity);
         }
     }
