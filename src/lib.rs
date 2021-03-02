@@ -1,17 +1,12 @@
-mod aabb;
-mod debug;
-mod obb;
-mod sphere;
+pub mod aabb;
+pub mod debug;
+pub mod obb;
+pub mod sphere;
 
 use bevy::{prelude::*, transform::TransformSystem};
 use debug::{update_debug_mesh_visibility, update_debug_meshes};
 use std::marker::PhantomData;
 use std::{borrow::Cow, fmt::Debug};
-
-pub use aabb::AxisAlignedBB;
-pub use debug::DebugBounds;
-pub use obb::OrientedBB;
-pub use sphere::BSphere;
 
 #[derive(Default)]
 pub struct BoundingVolumePlugin<T: BoundingVolume> {

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_mod_bounding::*;
+use bevy_mod_bounding::{aabb, debug, obb, *};
 
 // This example will show you how to use your mouse cursor as a ray casting source, cast into the
 // scene, intersect a mesh, and mark the intersection with the built in debug cursor. If you are
@@ -9,8 +9,8 @@ fn main() {
     App::build()
         .add_plugins(DefaultPlugins)
         //.add_plugin(BoundingVolumePlugin::<BSphere>::default())
-        .add_plugin(BoundingVolumePlugin::<AxisAlignedBB>::default())
-        .add_plugin(BoundingVolumePlugin::<OrientedBB>::default())
+        .add_plugin(BoundingVolumePlugin::<aabb::AxisAlignedBB>::default())
+        .add_plugin(BoundingVolumePlugin::<obb::OrientedBB>::default())
         .add_startup_system(setup.system())
         .add_system(rotation_system.system())
         .run();
@@ -40,8 +40,8 @@ fn setup(
             transform: Transform::from_translation(Vec3::new(-1.0, 0.0, 0.0)),
             ..Default::default()
         })
-        .with(Bounded::<AxisAlignedBB>::default())
-        .with(DebugBounds)
+        .with(Bounded::<aabb::AxisAlignedBB>::default())
+        .with(debug::DebugBounds)
         .with(Rotator)
         .with(Mesh::from(Mesh::from(shape::Icosphere {
             radius: 5.0,
@@ -53,8 +53,8 @@ fn setup(
             transform: Transform::from_translation(Vec3::new(1.0, 0.0, 0.0)),
             ..Default::default()
         })
-        .with(Bounded::<OrientedBB>::default())
-        .with(DebugBounds)
+        .with(Bounded::<obb::OrientedBB>::default())
+        .with(debug::DebugBounds)
         .with(Rotator)
         .spawn(LightBundle {
             transform: Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),

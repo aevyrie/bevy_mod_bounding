@@ -1,4 +1,4 @@
-use crate::{AxisAlignedBB, BSphere, BoundingVolume, OrientedBB};
+use crate::{aabb::AxisAlignedBB, obb::OrientedBB, sphere::BSphere, BoundingVolume};
 use bevy::{
     prelude::*,
     render::{mesh::Indices, pipeline::PrimitiveTopology},
