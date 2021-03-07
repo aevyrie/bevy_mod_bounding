@@ -101,7 +101,7 @@ pub trait BoundingVolume {
 /// entity. This new BoundingVolume is fully initialized and will be kept up to date with the
 /// `update()` system.
 pub fn spawn<T: 'static + BoundingVolume + Send + Sync + Debug>(
-    commands: &mut Commands,
+    mut commands: Commands,
     meshes: Res<Assets<Mesh>>,
     query: Query<(&Handle<Mesh>, &GlobalTransform, Entity), With<Bounded<T>>>,
 ) {
@@ -115,7 +115,7 @@ pub fn spawn<T: 'static + BoundingVolume + Send + Sync + Debug>(
                 new_bound
             );
             commands.with(new_bound);
-            commands.remove_one::<Bounded<T>>(entity);
+            commands.remove::<Bounded<T>>(entity);
         }
     }
 }

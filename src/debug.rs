@@ -13,11 +13,11 @@ pub struct DebugBoundsMesh;
 /// Updates existing debug meshes, and creates new debug meshes on entities with a bounding volume
 /// component marked with [BoundingVolumeDebug] and no existing debug mesh.
 pub fn update_debug_meshes<T>(
-    commands: &mut Commands,
+    mut commands: Commands,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
     query: Query<
-        (&GlobalTransform, &T, Entity, Option<&Children>),
+        (&'static GlobalTransform, &T, Entity, Option<&Children>),
         (Changed<T>, With<DebugBounds>),
     >,
     mut debug_mesh_query: Query<&mut Handle<Mesh>, With<DebugBoundsMesh>>,
@@ -59,15 +59,22 @@ pub fn update_debug_meshes<T>(
 }
 
 pub fn update_debug_mesh_visibility<T>(
-    query: Query<(&Children, &Visible), (With<DebugBounds>, With<T>, Changed<Visible>)>,
-    mut child_query: Query<&mut Visible, With<DebugBoundsMesh>>,
+    mut query: QuerySet<(
+        Query<(&Children, &Visible), (With<DebugBounds>, With<T>, Changed<Visible>)>,
+        Query<&mut Visible, With<DebugBoundsMesh>>,
+    )>,
 ) where
     T: 'static + BoundingVolume + Clone + Send + Sync,
 {
-    for (children, parent_visible) in query.iter() {
+    let child_list: Vec<(Box<Children>, bool)> = query
+        .q0()
+        .iter()
+        .map(|(children, visible)| (Box::new((*children).clone()), visible.is_visible))
+        .collect();
+    for (children, parent_visible) in child_list.iter() {
         for child in children.iter() {
-            if let Ok(mut child_visible) = child_query.get_mut(*child) {
-                child_visible.is_visible = parent_visible.is_visible;
+            if let Ok(mut child_visible) = query.q1_mut().get_mut(*child) {
+                child_visible.is_visible = *parent_visible;
             }
         }
     }
