@@ -86,7 +86,7 @@ impl AxisAlignedBB {
 impl BoundingVolume for AxisAlignedBB {
     fn new(mesh: &Mesh, transform: &GlobalTransform) -> Self {
         let transform_matrix = Transform {
-            translation: Vec3::zero(),
+            translation: Vec3::ZERO,
             rotation: transform.rotation,
             scale: transform.scale,
         }
@@ -114,7 +114,7 @@ impl BoundingVolume for AxisAlignedBB {
             Mat4::from_scale_rotation_translation(
                 transform.scale,
                 transform.rotation,
-                Vec3::zero(),
+                Vec3::ZERO,
             )
             .inverse(),
         );

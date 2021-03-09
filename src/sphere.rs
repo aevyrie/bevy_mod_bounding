@@ -98,12 +98,8 @@ impl BoundingVolume for BSphere {
             ..Default::default()
         });
         let inverse_transform = GlobalTransform::from_matrix(
-            Mat4::from_scale_rotation_translation(
-                transform.scale,
-                transform.rotation,
-                Vec3::zero(),
-            )
-            .inverse(),
+            Mat4::from_scale_rotation_translation(transform.scale, transform.rotation, Vec3::ZERO)
+                .inverse(),
         );
         match mesh.attribute_mut(Mesh::ATTRIBUTE_POSITION) {
             None => panic!("Mesh does not contain vertex positions"),

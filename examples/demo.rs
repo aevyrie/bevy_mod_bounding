@@ -64,7 +64,7 @@ fn setup(
 
 fn rotation_system(time: Res<Time>, mut query: Query<&mut Transform, With<Rotator>>) {
     for mut transform in query.iter_mut() {
-        let scale = Vec3::one() * ((time.seconds_since_startup() as f32).sin() + 2.0);
+        let scale = Vec3::ONE * ((time.seconds_since_startup() as f32).sin() + 2.0);
         let rot_x = Quat::from_rotation_x((time.seconds_since_startup() as f32 / 5.0).sin() / 50.0);
         let rot_y = Quat::from_rotation_y((time.seconds_since_startup() as f32 / 3.0).sin() / 50.0);
         let rot_z = Quat::from_rotation_z((time.seconds_since_startup() as f32 / 4.0).sin() / 50.0);

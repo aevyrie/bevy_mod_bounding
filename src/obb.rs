@@ -113,7 +113,7 @@ impl BoundingVolume for OrientedBB {
             },
         };
 
-        let mut orientation = Quat::identity();
+        let mut orientation = Quat::IDENTITY;
         let mut volume = f32::MAX;
         // Rotate about y-axis  (turntable) until the smallest volume box is found
         let orientation_temp = orientation;
