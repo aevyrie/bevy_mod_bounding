@@ -1,14 +1,10 @@
 use bevy::prelude::*;
 use bevy_mod_bounding::{aabb, debug, obb, *};
 
-// This example will show you how to use your mouse cursor as a ray casting source, cast into the
-// scene, intersect a mesh, and mark the intersection with the built in debug cursor. If you are
-// looking for a more fully-featured mouse picking plugin, try out bevy_mod_picking.
-
 fn main() {
     App::build()
         .add_plugins(DefaultPlugins)
-        //.add_plugin(BoundingVolumePlugin::<BSphere>::default())
+        .add_plugin(BoundingVolumePlugin::<sphere::BSphere>::default())
         .add_plugin(BoundingVolumePlugin::<aabb::AxisAlignedBB>::default())
         .add_plugin(BoundingVolumePlugin::<obb::OrientedBB>::default())
         .add_startup_system(setup.system())
@@ -34,6 +30,7 @@ fn setup(
             )),
             ..Default::default()
         })
+        // AABB
         .spawn(PbrBundle {
             mesh: asset_server.get_handle(mesh_path),
             material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
@@ -43,25 +40,34 @@ fn setup(
         .with(Bounded::<aabb::AxisAlignedBB>::default())
         .with(debug::DebugBounds)
         .with(Rotator)
-        .with(Mesh::from(Mesh::from(shape::Icosphere {
-            radius: 5.0,
+        // OBB
+        .spawn(PbrBundle {
+            mesh: asset_server.get_handle(mesh_path),
+            material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
+            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
             ..Default::default()
-        })))
+        })
+        .with(Bounded::<obb::OrientedBB>::default())
+        .with(debug::DebugBounds)
+        .with(Rotator)
+        // Sphere
         .spawn(PbrBundle {
             mesh: asset_server.get_handle(mesh_path),
             material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
             transform: Transform::from_translation(Vec3::new(1.0, 0.0, 0.0)),
             ..Default::default()
         })
-        .with(Bounded::<obb::OrientedBB>::default())
+        .with(Bounded::<sphere::BSphere>::default())
         .with(debug::DebugBounds)
         .with(Rotator)
+        // Light
         .spawn(LightBundle {
             transform: Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),
             ..Default::default()
         });
 }
 
+/// Rotate the meshes to demonstrate how the bounding volumes update
 fn rotation_system(time: Res<Time>, mut query: Query<&mut Transform, With<Rotator>>) {
     for mut transform in query.iter_mut() {
         let scale = Vec3::ONE * ((time.seconds_since_startup() as f32).sin() + 2.0);

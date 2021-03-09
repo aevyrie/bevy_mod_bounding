@@ -30,7 +30,8 @@ pub fn update_debug_meshes<T>(
         if let Some(children) = optional_children {
             for child in children.iter() {
                 if let Ok(mut mesh_handle) = debug_mesh_query.get_mut(*child) {
-                    let new_handle = meshes.add(bound_vol.new_debug_mesh(transform));
+                    let mesh = bound_vol.new_debug_mesh(transform);
+                    let new_handle = meshes.add(mesh);
                     *mesh_handle = new_handle;
                     updated_existing_child = true;
                     break;
@@ -135,6 +136,75 @@ impl From<&OrientedBB> for Mesh {
             0, 4, 1, 5, 2, 6, 3, 7, // Verticals
         ]);
 
+        let mut mesh = Mesh::new(PrimitiveTopology::LineList);
+        mesh.set_attribute(Mesh::ATTRIBUTE_POSITION, vertices.clone());
+        mesh.set_attribute(Mesh::ATTRIBUTE_UV_0, vertices.clone());
+        mesh.set_attribute(Mesh::ATTRIBUTE_NORMAL, vertices);
+        mesh.set_indices(Some(indices));
+        mesh
+    }
+}
+
+impl From<&BSphere> for Mesh {
+    fn from(sphere: &BSphere) -> Self {
+        let radius = sphere.mesh_space_radius();
+        let origin = sphere.mesh_space_origin();
+        let n_points: i8 = 24;
+        let vertices_x0: Vec<[f32; 3]> = (0..n_points)
+            .map(|i| {
+                let angle = i as f32 * 2.0 * std::f32::consts::PI / (n_points as f32);
+                [
+                    0.0,
+                    angle.sin() * radius + origin.y,
+                    angle.cos() * radius + origin.z,
+                ]
+            })
+            .collect();
+        let vertices_y0: Vec<[f32; 3]> = (0..n_points)
+            .map(|i| {
+                let angle = i as f32 * 2.0 * std::f32::consts::PI / (n_points as f32);
+                [
+                    angle.cos() * radius + origin.x,
+                    0.0,
+                    angle.sin() * radius + origin.z,
+                ]
+            })
+            .collect();
+        let vertices_z0: Vec<[f32; 3]> = (0..n_points)
+            .map(|i| {
+                let angle = i as f32 * 2.0 * std::f32::consts::PI / (n_points as f32);
+                [
+                    angle.cos() * radius + origin.x,
+                    angle.sin() * radius + origin.y,
+                    0.0,
+                ]
+            })
+            .collect();
+        let vertices = [vertices_x0, vertices_y0, vertices_z0].concat();
+        let indices_single: Vec<u32> = (0..n_points * 2)
+            .map(|i| {
+                let result = (i as u32 + 1) / 2;
+                if result == n_points as u32 {
+                    0
+                } else {
+                    result
+                }
+            })
+            .collect();
+        let indices = Indices::U32(Vec::from(
+            [
+                indices_single
+                    .iter()
+                    .map(|&index| index + n_points as u32)
+                    .collect(),
+                indices_single
+                    .iter()
+                    .map(|&index| index + 2 * n_points as u32)
+                    .collect(),
+                indices_single,
+            ]
+            .concat(),
+        ));
         let mut mesh = Mesh::new(PrimitiveTopology::LineList);
         mesh.set_attribute(Mesh::ATTRIBUTE_POSITION, vertices.clone());
         mesh.set_attribute(Mesh::ATTRIBUTE_UV_0, vertices.clone());

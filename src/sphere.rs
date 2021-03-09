@@ -5,7 +5,7 @@ use bevy::{
 };
 use core::panic;
 
-/// Defines a bounding sphere with a centered origin and a radius..
+/// Defines a bounding sphere with a radius and an origin at the center.
 #[derive(Debug, Clone, Default)]
 pub struct BSphere {
     /// Origin of the sphere in mesh space. The intent is that the bounding volume will be queried
@@ -13,7 +13,7 @@ pub struct BSphere {
     /// world position of the mesh, and the radius can be used to determine the bounding volume.
     mesh_space_origin: Vec3,
     /// Radius of the sphere that bounds the mesh, in mesh space.
-    radius: f32,
+    mesh_space_radius: f32,
 }
 impl BSphere {
     /// Given the current [GlobalTransform] of the bounded mesh, returns the central origin of the
@@ -24,7 +24,15 @@ impl BSphere {
     /// Given the current [GlobalTransform] of the bounded mesh, returns the radius of the sphere
     /// that bounds the mesh in world space.
     pub fn radius(&self, transform: &GlobalTransform) -> f32 {
-        self.radius * transform.scale.max_element()
+        self.mesh_space_radius * transform.scale.max_element()
+    }
+    /// Get a reference to the b sphere's mesh space origin.
+    pub fn mesh_space_origin(&self) -> &Vec3 {
+        &self.mesh_space_origin
+    }
+    /// Get a reference to the b sphere's mesh space radius.
+    pub fn mesh_space_radius(&self) -> &f32 {
+        &self.mesh_space_radius
     }
 }
 
@@ -65,7 +73,7 @@ impl BoundingVolume for BSphere {
         // Construct a bounding sphere using these two points as the poles
         let mut sphere = BSphere {
             mesh_space_origin: point_y.lerp(point_z, 0.5),
-            radius: point_y.distance(point_z) / 2.0,
+            mesh_space_radius: point_y.distance(point_z) / 2.0,
         };
         // Iteratively adjust sphere until it encloses all points
         loop {
@@ -79,12 +87,12 @@ impl BoundingVolume for BSphere {
             });
             // If the furthest point is outside the sphere, we need to adjust it
             let point_dist = point_n.distance(sphere.mesh_space_origin);
-            if point_dist > sphere.radius {
-                let radius_new = (sphere.radius + point_dist) / 2.0;
+            if point_dist > sphere.mesh_space_radius {
+                let radius_new = (sphere.mesh_space_radius + point_dist) / 2.0;
                 let lerp_ratio = (point_dist - radius_new) / point_dist;
                 sphere = BSphere {
                     mesh_space_origin: sphere.mesh_space_origin.lerp(point_n, lerp_ratio),
-                    radius: radius_new,
+                    mesh_space_radius: radius_new,
                 };
             } else {
                 return sphere;
@@ -92,13 +100,13 @@ impl BoundingVolume for BSphere {
         }
     }
 
+    /// Generate a debug mesh, and apply the inverse transform. Because the debug mesh is a child,
+    /// the transform of the parent will be applied to it. This needs to be negated so the bounding
+    /// circle debug mesh isn't warped.
     fn new_debug_mesh(&self, transform: &GlobalTransform) -> Mesh {
-        let mut mesh = Mesh::from(shape::Icosphere {
-            radius: self.radius(transform),
-            ..Default::default()
-        });
-        let inverse_transform = GlobalTransform::from_matrix(
-            Mat4::from_scale_rotation_translation(transform.scale, transform.rotation, Vec3::ZERO)
+        let mut mesh = Mesh::from(self);
+        let inverse_transform = Transform::from_matrix(
+            Mat4::from_scale_rotation_translation(Vec3::ONE, transform.rotation, Vec3::ZERO)
                 .inverse(),
         );
         match mesh.attribute_mut(Mesh::ATTRIBUTE_POSITION) {
@@ -118,12 +126,8 @@ impl BoundingVolume for BSphere {
         mesh
     }
 
-    fn update_on_transform_change(
-        &self,
-        _mesh: &Mesh,
-        _transform: &GlobalTransform,
-    ) -> Option<Self> {
-        None
+    fn update_on_transform_change(&self, mesh: &Mesh, transform: &GlobalTransform) -> Option<Self> {
+        Some(Self::new(mesh, transform))
     }
 
     fn outside_plane(

@@ -109,11 +109,7 @@ pub fn spawn<T: 'static + BoundingVolume + Send + Sync + Debug>(
         if let Some(mesh) = meshes.get(handle) {
             commands.set_current_entity(entity);
             let new_bound = T::new(mesh, transform);
-            warn!(
-                "New {} generated: {:?}",
-                std::any::type_name::<T>(),
-                new_bound
-            );
+            info!("New bounding volume generated: {:?}", new_bound);
             commands.with(new_bound);
             commands.remove::<Bounded<T>>(entity);
         }
