@@ -2,7 +2,7 @@
 
 Unofficial plugin for generating bounding boxes.
 
-![demo](docs/animation.webp)
+![demo](docs/animation.png)
 
 ## Status
 
