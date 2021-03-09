@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::camera};
 use bevy_mod_bounding::{aabb, debug, obb, *};
 
 fn main() {
@@ -21,15 +21,14 @@ fn setup(
 ) {
     let mesh_path = "models/waterbottle/WaterBottle.gltf#Mesh0/Primitive0";
     let _scenes: Vec<HandleUntyped> = asset_server.load_folder("models").unwrap();
+    let mut ortho_cam = OrthographicCameraBundle::new_3d();
+    ortho_cam.transform = Transform::from_matrix(Mat4::face_toward(
+        Vec3::new(-0.5, 0.5, 3.0),
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(0.0, 1.0, 0.0),
+    ));
     commands
-        .spawn(PerspectiveCameraBundle {
-            transform: Transform::from_matrix(Mat4::face_toward(
-                Vec3::new(0.0, 1.0, 3.0),
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(0.0, 1.0, 0.0),
-            )),
-            ..Default::default()
-        })
+        .spawn(ortho_cam)
         // AABB
         .spawn(PbrBundle {
             mesh: asset_server.get_handle(mesh_path),
