@@ -111,12 +111,8 @@ impl BoundingVolume for AxisAlignedBB {
     fn new_debug_mesh(&self, transform: &GlobalTransform) -> Mesh {
         let mut mesh = Mesh::from(self);
         let inverse_transform = Transform::from_matrix(
-            Mat4::from_scale_rotation_translation(
-                transform.scale,
-                transform.rotation,
-                Vec3::ZERO,
-            )
-            .inverse(),
+            Mat4::from_scale_rotation_translation(transform.scale, transform.rotation, Vec3::ZERO)
+                .inverse(),
         );
         match mesh.attribute_mut(Mesh::ATTRIBUTE_POSITION) {
             None => panic!("Mesh does not contain vertex positions"),
