@@ -5,7 +5,7 @@ use bevy::{
     render::{mesh::VertexAttributeValues, pipeline::PrimitiveTopology},
 };
 use core::panic;
-use std::f32::consts::PI;
+use std::{convert::TryInto, f32::consts::PI};
 
 /// Defines a bounding box, oriented to minimize the bounded volume. This bounding box is expensive
 /// to compute, but cheap to update.
@@ -36,7 +36,14 @@ impl OrientedBB {
         let orient = Mat4::from_quat(self.orientation());
         let transform = transform.compute_matrix() * orient;
         let transform = GlobalTransform::from_matrix(transform);
-        self.aabb.vertices(transform)
+        self.aabb
+            .vertices_mesh_space()
+            .iter()
+            .map(|&vertex| transform * vertex)
+            .collect::<Vec<Vec3>>()
+            .as_slice()
+            .try_into()
+            .unwrap()
     }
     pub fn vertices_mesh_space(&self) -> [Vec3; 8] {
         let orient = Mat4::from_quat(self.orientation());
