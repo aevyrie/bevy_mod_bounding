@@ -1,6 +1,6 @@
 # Bounding Box Generation for Bevy
 
-Unofficial plugin for generating bounding boxes.
+Unofficial plugin for generating bounding volumes.
 
 ![demo](docs/animation.png)
 
