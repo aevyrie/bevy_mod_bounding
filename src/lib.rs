@@ -5,8 +5,15 @@ pub mod sphere;
 
 use bevy::{prelude::*, transform::TransformSystem};
 use debug::{update_debug_mesh_visibility, update_debug_meshes};
+use std::fmt::Debug;
 use std::marker::PhantomData;
-use std::{borrow::Cow, fmt::Debug};
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone, SystemLabel)]
+pub enum BoundingSystem {
+    UpdateBounds,
+    UpdateDebug,
+    UpdateDebugVisibility,
+}
 
 #[derive(Default)]
 pub struct BoundingVolumePlugin<T: BoundingVolume> {
@@ -26,32 +33,20 @@ where
                 update::<T>
                     .system()
                     .after(TransformSystem::TransformPropagate)
-                    .label(Cow::Owned(format!(
-                        "update_boundvols_{}",
-                        std::any::type_name::<T>()
-                    ))),
+                    .label(BoundingSystem::UpdateBounds),
             )
             .add_system_to_stage(
                 CoreStage::PostUpdate,
                 update_debug_meshes::<T>
                     .system()
-                    .after(Cow::Owned(format!(
-                        "update_boundvols_{}",
-                        std::any::type_name::<T>()
-                    )))
-                    .label(Cow::Owned(format!(
-                        "update_debugboundvols_{}",
-                        std::any::type_name::<T>()
-                    ))),
+                    .after(BoundingSystem::UpdateBounds)
+                    .label(BoundingSystem::UpdateDebug),
             )
             .add_system_to_stage(
                 CoreStage::PostUpdate,
                 update_debug_mesh_visibility::<T>
                     .system()
-                    .after(Cow::Owned(format!(
-                        "update_debugboundvols_{}",
-                        std::any::type_name::<T>()
-                    )))
+                    .after(BoundingSystem::UpdateDebug)
                     .before(bevy::render::RenderSystem::VisibleEntities),
             );
     }
