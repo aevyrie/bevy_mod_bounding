@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::camera};
+use bevy::prelude::*;
 use bevy_mod_bounding::{aabb, debug, obb, *};
 
 fn main() {

@@ -51,7 +51,8 @@ where
                     .after(Cow::Owned(format!(
                         "update_debugboundvols_{}",
                         std::any::type_name::<T>()
-                    ))),
+                    )))
+                    .before(bevy::render::RenderSystem::VisibleEntities),
             );
     }
 }
