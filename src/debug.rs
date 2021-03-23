@@ -41,19 +41,18 @@ pub fn update_debug_meshes<T>(
         // if the entity had a child, we don't need to create a new one
         if !updated_existing_child {
             let mesh_handle = meshes.add(bound_vol.new_debug_mesh(transform));
-            commands.set_current_entity(entity);
-            commands.with_children(|parent| {
+            commands.entity(entity).with_children(|parent| {
                 parent
-                    .spawn(PbrBundle {
+                    .spawn_bundle(PbrBundle {
                         mesh: mesh_handle,
                         material: materials.add(StandardMaterial {
-                            albedo: Color::rgb(0.0, 1.0, 0.0),
+                            base_color: Color::rgb(0.0, 1.0, 0.0),
                             unlit: true,
                             ..Default::default()
                         }),
                         ..Default::default()
                     })
-                    .with(DebugBoundsMesh);
+                    .insert(DebugBoundsMesh);
             });
         }
     }

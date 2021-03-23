@@ -27,43 +27,45 @@ fn setup(
         Vec3::new(0.0, 0.0, 0.0),
         Vec3::new(0.0, 1.0, 0.0),
     ));
+    commands.spawn_bundle(ortho_cam);
+    // AABB
     commands
-        .spawn(ortho_cam)
-        // AABB
-        .spawn(PbrBundle {
+        .spawn_bundle(PbrBundle {
             mesh: asset_server.get_handle(mesh_path),
             material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
             transform: Transform::from_translation(Vec3::new(-1.0, 0.0, 0.0)),
             ..Default::default()
         })
-        .with(Bounded::<aabb::AxisAlignedBB>::default())
-        .with(debug::DebugBounds)
-        .with(Rotator)
-        // OBB
-        .spawn(PbrBundle {
+        .insert(Bounded::<aabb::AxisAlignedBB>::default())
+        .insert(debug::DebugBounds)
+        .insert(Rotator);
+    // OBB
+    commands
+        .spawn_bundle(PbrBundle {
             mesh: asset_server.get_handle(mesh_path),
             material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
             transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
             ..Default::default()
         })
-        .with(Bounded::<obb::OrientedBB>::default())
-        .with(debug::DebugBounds)
-        .with(Rotator)
-        // Sphere
-        .spawn(PbrBundle {
+        .insert(Bounded::<obb::OrientedBB>::default())
+        .insert(debug::DebugBounds)
+        .insert(Rotator);
+    // Sphere
+    commands
+        .spawn_bundle(PbrBundle {
             mesh: asset_server.get_handle(mesh_path),
             material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
             transform: Transform::from_translation(Vec3::new(1.0, 0.0, 0.0)),
             ..Default::default()
         })
-        .with(Bounded::<sphere::BSphere>::default())
-        .with(debug::DebugBounds)
-        .with(Rotator)
-        // Light
-        .spawn(LightBundle {
-            transform: Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),
-            ..Default::default()
-        });
+        .insert(Bounded::<sphere::BSphere>::default())
+        .insert(debug::DebugBounds)
+        .insert(Rotator);
+    // Light
+    commands.spawn_bundle(LightBundle {
+        transform: Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),
+        ..Default::default()
+    });
 }
 
 /// Rotate the meshes to demonstrate how the bounding volumes update
