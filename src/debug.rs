@@ -12,6 +12,7 @@ pub struct DebugBoundsMesh;
 
 /// Updates existing debug meshes, and creates new debug meshes on entities with a bounding volume
 /// component marked with [BoundingVolumeDebug] and no existing debug mesh.
+#[allow(clippy::type_complexity)]
 pub fn update_debug_meshes<T>(
     mut commands: Commands,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -58,6 +59,7 @@ pub fn update_debug_meshes<T>(
     }
 }
 
+#[allow(clippy::type_complexity)]
 pub fn update_debug_mesh_visibility<T>(
     mut query: QuerySet<(
         Query<(&Children, &Visible), (With<DebugBounds>, With<T>, Changed<Visible>)>,
@@ -190,7 +192,7 @@ impl From<&BSphere> for Mesh {
                 }
             })
             .collect();
-        let indices = Indices::U32(Vec::from(
+        let indices = Indices::U32(
             [
                 indices_single
                     .iter()
@@ -203,7 +205,7 @@ impl From<&BSphere> for Mesh {
                 indices_single,
             ]
             .concat(),
-        ));
+        );
         let mut mesh = Mesh::new(PrimitiveTopology::LineList);
         mesh.set_attribute(Mesh::ATTRIBUTE_POSITION, vertices.clone());
         mesh.set_attribute(Mesh::ATTRIBUTE_UV_0, vertices.clone());

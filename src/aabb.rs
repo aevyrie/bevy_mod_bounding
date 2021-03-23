@@ -72,7 +72,7 @@ impl AxisAlignedBB {
     }
     /// Given a set of points, fit an axis oriented bounding box to the vertices by finding the
     /// extents of the mesh.
-    pub fn compute_aabb(vertices: &Vec<Vec3>) -> AxisAlignedBB {
+    pub fn compute_aabb(vertices: &[Vec3]) -> AxisAlignedBB {
         let mut maximums = Vec3::new(f32::MIN, f32::MIN, f32::MIN);
         let mut minimums = Vec3::new(f32::MAX, f32::MAX, f32::MAX);
         for vertex in vertices.iter() {
@@ -147,6 +147,6 @@ impl BoundingVolume for AxisAlignedBB {
                 return false;
             }
         }
-        return true;
+        true
     }
 }
