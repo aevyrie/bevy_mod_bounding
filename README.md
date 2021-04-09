@@ -7,7 +7,7 @@
 
 Unofficial plugin for generating bounding volumes.
 
-![demo](docs/animation.png)
+![demo](https://user-images.githubusercontent.com/2632925/114147530-a4785800-98cd-11eb-9395-7a0522e117a2.gif)
 
 ## Status
 
