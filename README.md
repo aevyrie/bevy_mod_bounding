@@ -39,4 +39,4 @@ This project is licensed under the [MIT license](https://github.com/aevyrie/bevy
 
 ## Contribution
 
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in bevy_mod_picking by you, shall be licensed as MIT, without any additional terms or conditions.
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in bevy_mod_bounding by you, shall be licensed as MIT, without any additional terms or conditions.
