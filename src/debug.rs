@@ -1,4 +1,4 @@
-use crate::{aabb::AxisAlignedBB, obb::OrientedBB, sphere::BSphere, BoundingVolume};
+use crate::{aabb::AABB, obb::OBB, sphere::BSphere, BoundingVolume};
 use bevy::{
     prelude::*,
     render::{mesh::Indices, pipeline::PrimitiveTopology},
@@ -82,8 +82,8 @@ pub fn update_debug_mesh_visibility<T>(
     }
 }
 
-impl From<&AxisAlignedBB> for Mesh {
-    fn from(aabb: &AxisAlignedBB) -> Self {
+impl From<&AABB> for Mesh {
+    fn from(aabb: &AABB) -> Self {
         /*
               (2)-----(3)               Y
                | \     | \              |
@@ -114,8 +114,8 @@ impl From<&AxisAlignedBB> for Mesh {
     }
 }
 
-impl From<&OrientedBB> for Mesh {
-    fn from(obb: &OrientedBB) -> Self {
+impl From<&OBB> for Mesh {
+    fn from(obb: &OBB) -> Self {
         /*
               (2)-----(3)               Y
                | \     | \              |

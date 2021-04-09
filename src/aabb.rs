@@ -9,7 +9,7 @@ use core::panic;
 /// the mesh's origin, but the current [GlobalTransform] has been used to rotate and scale the mesh
 /// to compute a valid AABB. This reduces float error when the mesh is located far from the origin.
 #[derive(Debug, Clone, Default)]
-pub struct AxisAlignedBB {
+pub struct AABB {
     /// The coordinates of the point located at the minimum x, y, and z coordinate. This can also
     /// be thought of as the length of the -x, -y, -z axes that extend from the origin and touch
     /// the inside of the bounding box faces.
@@ -19,7 +19,7 @@ pub struct AxisAlignedBB {
     /// the inside of the bounding box faces.
     maximums: Vec3,
 }
-impl AxisAlignedBB {
+impl AABB {
     /// Returns the distance from the origin of the mesh to the negative extents of the bounding
     /// box in world space, aligned with the world axes. I.e.: distance from the mesh origin to the
     /// faces of the bounding box in the -x, -y, -z world axis directions.
@@ -68,22 +68,22 @@ impl AxisAlignedBB {
         ]
     }
     pub fn from_extents(minimums: Vec3, maximums: Vec3) -> Self {
-        AxisAlignedBB { minimums, maximums }
+        AABB { minimums, maximums }
     }
     /// Given a set of points, fit an axis oriented bounding box to the vertices by finding the
     /// extents of the mesh.
-    pub fn compute_aabb(vertices: &[Vec3]) -> AxisAlignedBB {
+    pub fn compute_aabb(vertices: &[Vec3]) -> AABB {
         let mut maximums = Vec3::new(f32::MIN, f32::MIN, f32::MIN);
         let mut minimums = Vec3::new(f32::MAX, f32::MAX, f32::MAX);
         for vertex in vertices.iter() {
             maximums = vertex.max(maximums);
             minimums = vertex.min(minimums);
         }
-        AxisAlignedBB { minimums, maximums }
+        AABB { minimums, maximums }
     }
 }
 
-impl BoundingVolume for AxisAlignedBB {
+impl BoundingVolume for AABB {
     fn new(mesh: &Mesh, transform: &GlobalTransform) -> Self {
         let transform_matrix = Transform {
             translation: Vec3::ZERO,
