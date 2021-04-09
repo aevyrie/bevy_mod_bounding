@@ -24,3 +24,19 @@ Run the demo with:
 ```shell
 cargo run --features ex --example demo
 ```
+
+## Bevy Version Support
+
+I intend to track the `main` branch of Bevy. PRs supporting this are welcome! 
+
+|bevy|bevy_mod_bounding|
+|---|---|
+|0.5|0.1|
+
+# License
+
+This project is licensed under the [MIT license](https://github.com/aevyrie/bevy_mod_bounding/blob/master/LICENSE).
+
+## Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in bevy_mod_picking by you, shall be licensed as MIT, without any additional terms or conditions.
