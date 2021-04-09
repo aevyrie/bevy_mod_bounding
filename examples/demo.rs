@@ -6,8 +6,8 @@ fn main() {
         .insert_resource(Msaa { samples: 2 })
         .add_plugins(DefaultPlugins)
         .add_plugin(BoundingVolumePlugin::<sphere::BSphere>::default())
-        .add_plugin(BoundingVolumePlugin::<aabb::AABB>::default())
-        .add_plugin(BoundingVolumePlugin::<obb::OBB>::default())
+        .add_plugin(BoundingVolumePlugin::<aabb::Aabb>::default())
+        .add_plugin(BoundingVolumePlugin::<obb::Obb>::default())
         .add_startup_system(setup.system())
         .add_system(rotation_system.system())
         .run();
@@ -35,7 +35,7 @@ fn setup(
             transform: Transform::from_translation(Vec3::new(-1.0, 0.0, 0.0)),
             ..Default::default()
         })
-        .insert(Bounded::<aabb::AABB>::default())
+        .insert(Bounded::<aabb::Aabb>::default())
         .insert(debug::DebugBounds)
         .insert(Rotator);
     // OBB
@@ -46,7 +46,7 @@ fn setup(
             transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
             ..Default::default()
         })
-        .insert(Bounded::<obb::OBB>::default())
+        .insert(Bounded::<obb::Obb>::default())
         .insert(debug::DebugBounds)
         .insert(Rotator);
     // Sphere

@@ -1,4 +1,4 @@
-use crate::{aabb::AABB, obb::OBB, sphere::BSphere, BoundingVolume};
+use crate::{aabb::Aabb, obb::Obb, sphere::BSphere, BoundingVolume};
 use bevy::{
     prelude::*,
     render::{mesh::Indices, pipeline::PrimitiveTopology},
@@ -82,8 +82,8 @@ pub fn update_debug_mesh_visibility<T>(
     }
 }
 
-impl From<&AABB> for Mesh {
-    fn from(aabb: &AABB) -> Self {
+impl From<&Aabb> for Mesh {
+    fn from(aabb: &Aabb) -> Self {
         /*
               (2)-----(3)               Y
                | \     | \              |
@@ -114,8 +114,8 @@ impl From<&AABB> for Mesh {
     }
 }
 
-impl From<&OBB> for Mesh {
-    fn from(obb: &OBB) -> Self {
+impl From<&Obb> for Mesh {
+    fn from(obb: &Obb) -> Self {
         /*
               (2)-----(3)               Y
                | \     | \              |
