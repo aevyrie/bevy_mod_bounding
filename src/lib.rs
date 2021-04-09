@@ -125,21 +125,21 @@ fn update<T: 'static + BoundingVolume + Send + Sync>(
 ) {
     for entity in changed_mesh_query.iter() {
         if let Ok((mut bounding_vol, transform, handle)) = bound_vol_query.get_mut(entity) {
-            let mesh = meshes
-                .get(handle)
-                .expect("Bounding volume had bad mesh handle");
-            *bounding_vol = T::new(mesh, transform);
+            if let Some(mesh) = meshes.get(handle) {
+                *bounding_vol = T::new(mesh, transform);
+            }
         }
     }
     for entity in changed_transform_query.iter() {
         // Only process entities that haven't already been updated.
         if changed_mesh_query.get(entity).is_err() {
             if let Ok((mut bounding_vol, transform, handle)) = bound_vol_query.get_mut(entity) {
-                let mesh = meshes
-                    .get(handle)
-                    .expect("Bounding volume had bad mesh handle");
-                if let Some(bound_vol) = bounding_vol.update_on_transform_change(mesh, transform) {
-                    *bounding_vol = bound_vol;
+                if let Some(mesh) = meshes.get(handle) {
+                    if let Some(bound_vol) =
+                        bounding_vol.update_on_transform_change(mesh, transform)
+                    {
+                        *bounding_vol = bound_vol;
+                    }
                 }
             }
         }
