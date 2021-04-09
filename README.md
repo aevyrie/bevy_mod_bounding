@@ -7,7 +7,7 @@
 
 Unofficial plugin for generating bounding volumes.
 
-![demo](docs/animation.png)
+![demo](https://user-images.githubusercontent.com/2632925/114147530-a4785800-98cd-11eb-9395-7a0522e117a2.gif)
 
 ## Status
 
@@ -24,3 +24,19 @@ Run the demo with:
 ```shell
 cargo run --features ex --example demo
 ```
+
+## Bevy Version Support
+
+I intend to track the `main` branch of Bevy. PRs supporting this are welcome! 
+
+|bevy|bevy_mod_bounding|
+|---|---|
+|0.5|0.1|
+
+# License
+
+This project is licensed under the [MIT license](https://github.com/aevyrie/bevy_mod_bounding/blob/master/LICENSE).
+
+## Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in bevy_mod_bounding by you, shall be licensed as MIT, without any additional terms or conditions.
