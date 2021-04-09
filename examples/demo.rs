@@ -3,6 +3,7 @@ use bevy_mod_bounding::{aabb, debug, obb, *};
 
 fn main() {
     App::build()
+        .insert_resource(Msaa { samples: 2 })
         .add_plugins(DefaultPlugins)
         .add_plugin(BoundingVolumePlugin::<sphere::BSphere>::default())
         .add_plugin(BoundingVolumePlugin::<aabb::AxisAlignedBB>::default())
@@ -20,11 +21,7 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let mut ortho_cam = OrthographicCameraBundle::new_3d();
-    ortho_cam.transform = Transform::from_matrix(Mat4::face_toward(
-        Vec3::new(1.0, 1.0, 5.0),
-        Vec3::ZERO,
-        Vec3::Y,
-    ));
+    ortho_cam.transform = Transform::from_matrix(Mat4::face_toward(Vec3::Z, Vec3::ZERO, Vec3::Y));
     commands.spawn_bundle(ortho_cam);
     // AABB
     commands
