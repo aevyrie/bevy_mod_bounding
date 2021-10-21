@@ -19,7 +19,7 @@ use std::{convert::TryInto, f32::consts::PI};
 /// the volume of the bounding box. The properties are stored in mesh space to minimize rounding
 /// error, and make it easy to defer recomputing the bounding volume until the mesh itself is
 /// changed.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Component)]
 pub struct Obb {
     aabb: Aabb,
     /// The orientation of the mesh that minimizes the AABB.
@@ -112,7 +112,7 @@ impl BoundingVolume for Obb {
         let vertices: Vec<Vec3> = match mesh.attribute(Mesh::ATTRIBUTE_POSITION) {
             None => panic!("Mesh does not contain vertex positions"),
             Some(vertex_values) => match &vertex_values {
-                VertexAttributeValues::Float3(positions) => positions
+                VertexAttributeValues::Float32x3(positions) => positions
                     .iter()
                     .map(|coordinates| Vec3::from(*coordinates))
                     .collect(),

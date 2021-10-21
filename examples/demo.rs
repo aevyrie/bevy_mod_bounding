@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_mod_bounding::{aabb, debug, obb, *};
 
 fn main() {
-    App::build()
+    App::new()
         .insert_resource(Msaa { samples: 2 })
         .add_plugins(DefaultPlugins)
         .add_plugin(BoundingVolumePlugin::<sphere::BSphere>::default())
@@ -13,6 +13,7 @@ fn main() {
         .run();
 }
 
+#[derive(Component)]
 struct Rotator;
 
 fn setup(
@@ -61,7 +62,7 @@ fn setup(
         .insert(debug::DebugBounds)
         .insert(Rotator);
     // Light
-    commands.spawn_bundle(LightBundle {
+    commands.spawn_bundle(PointLightBundle {
         transform: Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),
         ..Default::default()
     });
