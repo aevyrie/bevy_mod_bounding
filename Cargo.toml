@@ -8,6 +8,7 @@ description = "Bounding box generation for the Bevy Engine."
 repository = "https://github.com/aevyrie/bevy_mod_bounding/"
 keywords = ["gamedev", "graphics", "bevy", "3d", "bounding"]
 categories = ["game-engines", "rendering"]
+resolver = "2"
 
 [dependencies]
 bevy = { git = "https://github.com/bevyengine/bevy", branch = "main", version = "0.5" }
