@@ -8,7 +8,7 @@ use core::panic;
 /// Defines an axis-aligned bounding box in mesh space - that is - the bounding box is located at
 /// the mesh's origin, but the current [GlobalTransform] has been used to rotate and scale the mesh
 /// to compute a valid AABB. This reduces float error when the mesh is located far from the origin.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Component)]
 pub struct Aabb {
     /// The coordinates of the point located at the minimum x, y, and z coordinate. This can also
     /// be thought of as the length of the -x, -y, -z axes that extend from the origin and touch
@@ -98,7 +98,7 @@ impl BoundingVolume for Aabb {
         let vertices: Vec<Vec3> = match mesh.attribute(Mesh::ATTRIBUTE_POSITION) {
             None => panic!("Mesh does not contain vertex positions"),
             Some(vertex_values) => match &vertex_values {
-                VertexAttributeValues::Float3(positions) => positions
+                VertexAttributeValues::Float32x3(positions) => positions
                     .iter()
                     .map(|coordinates| transform_matrix.transform_point3(Vec3::from(*coordinates)))
                     .collect(),
@@ -117,7 +117,7 @@ impl BoundingVolume for Aabb {
         match mesh.attribute_mut(Mesh::ATTRIBUTE_POSITION) {
             None => panic!("Mesh does not contain vertex positions"),
             Some(vertex_values) => match vertex_values {
-                VertexAttributeValues::Float3(ref mut positions) => {
+                VertexAttributeValues::Float32x3(ref mut positions) => {
                     *positions = positions
                         .iter()
                         .map(|coordinates| {

@@ -5,9 +5,11 @@ use bevy::{
 };
 
 /// Marks an entity that should have a mesh added as a child to represent the mesh's bounding volume.
+#[derive(Component)]
 pub struct DebugBounds;
 
 /// Marks the debug bounding volume mesh, which exists as a child of a [BoundingVolumeDebug] entity
+#[derive(Component)]
 pub struct DebugBoundsMesh;
 
 /// Updates existing debug meshes, and creates new debug meshes on entities with a bounding volume
@@ -23,7 +25,7 @@ pub fn update_debug_meshes<T>(
     >,
     mut debug_mesh_query: Query<&mut Handle<Mesh>, With<DebugBoundsMesh>>,
 ) where
-    T: 'static + BoundingVolume + Clone + Send + Sync + std::fmt::Debug,
+    T: 'static + BoundingVolume + Clone + Send + Sync + std::fmt::Debug + Component,
     Mesh: From<&'static T>,
 {
     for (transform, bound_vol, entity, optional_children) in query.iter() {
@@ -62,11 +64,11 @@ pub fn update_debug_meshes<T>(
 #[allow(clippy::type_complexity)]
 pub fn update_debug_mesh_visibility<T>(
     mut query: QuerySet<(
-        Query<(&Children, &Visible), (With<DebugBounds>, With<T>, Changed<Visible>)>,
-        Query<&mut Visible, With<DebugBoundsMesh>>,
+        QueryState<(&Children, &Visible), (With<DebugBounds>, With<T>, Changed<Visible>)>,
+        QueryState<&mut Visible, With<DebugBoundsMesh>>,
     )>,
 ) where
-    T: 'static + BoundingVolume + Clone + Send + Sync,
+    T: 'static + BoundingVolume + Clone + Send + Sync + Component,
 {
     let child_list: Vec<(Box<Children>, bool)> = query
         .q0()
@@ -75,7 +77,7 @@ pub fn update_debug_mesh_visibility<T>(
         .collect();
     for (children, parent_visible) in child_list.iter() {
         for child in children.iter() {
-            if let Ok(mut child_visible) = query.q1_mut().get_mut(*child) {
+            if let Ok(mut child_visible) = query.q1().get_mut(*child) {
                 child_visible.is_visible = *parent_visible;
             }
         }

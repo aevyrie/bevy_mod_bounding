@@ -6,7 +6,7 @@ use bevy::{
 use core::panic;
 
 /// Defines a bounding sphere with a radius and an origin at the center.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Component)]
 pub struct BSphere {
     /// Origin of the sphere in mesh space. The intent is that the bounding volume will be queried
     /// along with its [GlobalTransform], so the origin of the sphere will be transformed to the
@@ -46,7 +46,7 @@ impl BoundingVolume for BSphere {
         let vertices: Vec<Vec3> = match mesh.attribute(Mesh::ATTRIBUTE_POSITION) {
             None => panic!("Mesh does not contain vertex positions"),
             Some(vertex_values) => match &vertex_values {
-                VertexAttributeValues::Float3(positions) => positions
+                VertexAttributeValues::Float32x3(positions) => positions
                     .iter()
                     .map(|coordinates| Vec3::from(*coordinates))
                     .collect(),
@@ -112,7 +112,7 @@ impl BoundingVolume for BSphere {
         match mesh.attribute_mut(Mesh::ATTRIBUTE_POSITION) {
             None => panic!("Mesh does not contain vertex positions"),
             Some(vertex_values) => match vertex_values {
-                VertexAttributeValues::Float3(ref mut positions) => {
+                VertexAttributeValues::Float32x3(ref mut positions) => {
                     *positions = positions
                         .iter()
                         .map(|coordinates| {

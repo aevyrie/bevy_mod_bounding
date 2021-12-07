@@ -23,10 +23,10 @@ pub struct BoundingVolumePlugin<T: BoundingVolume> {
 /// A plugin that provides functionality for generating and updating bounding volumes for meshes.
 impl<T> Plugin for BoundingVolumePlugin<T>
 where
-    T: 'static + Send + Sync + BoundingVolume + Clone + Debug,
+    T: 'static + Send + Sync + BoundingVolume + Clone + Debug + Component,
     Mesh: From<&'static T>,
 {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.add_system_to_stage(CoreStage::PreUpdate, spawn::<T>.system())
             .add_system_to_stage(
                 CoreStage::PostUpdate,
@@ -57,7 +57,7 @@ where
 /// the aforementioned mesh has loaded and can be read. This ensures that bounding volume
 /// components are always valid when queried, and at worst case can only be out of date if queried
 /// in a frame before the bounding volume update system is run.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Component)]
 pub struct Bounded<T: BoundingVolume + Send + Sync>(PhantomData<T>);
 
 impl<T: BoundingVolume + Send + Sync> Default for Bounded<T> {
@@ -97,7 +97,7 @@ pub trait BoundingVolume {
 /// entity. This new BoundingVolume is fully initialized and will be kept up to date with the
 /// `update()` system.
 #[allow(clippy::type_complexity)]
-pub fn spawn<T: 'static + BoundingVolume + Send + Sync + Debug>(
+pub fn spawn<T: 'static + BoundingVolume + Send + Sync + Debug + Component>(
     mut commands: Commands,
     meshes: Res<Assets<Mesh>>,
     query: Query<(&Handle<Mesh>, &GlobalTransform, Entity), With<Bounded<T>>>,
@@ -117,7 +117,7 @@ pub fn spawn<T: 'static + BoundingVolume + Send + Sync + Debug>(
 /// Updates [BoundingVolume]s when their meshes or [GlobalTransform]s are changed. If an entity's
 /// mesh has changed, triggering a bounding volume update, the update function will won't update it
 /// a second time if the transform has also changed.
-fn update<T: 'static + BoundingVolume + Send + Sync>(
+fn update<T: 'static + BoundingVolume + Send + Sync + Component>(
     meshes: Res<Assets<Mesh>>,
     changed_mesh_query: Query<Entity, Changed<Handle<Mesh>>>,
     changed_transform_query: Query<Entity, Changed<GlobalTransform>>,
